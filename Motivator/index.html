@@ -13,7 +13,6 @@
     <link rel="stylesheet" href="hark.css" />
     <link rel="stylesheet" href="hark-hero.css" />
     <link rel="stylesheet" href="hark-charts.css" />
-    <link rel="stylesheet" href="hark-shop.css" />
     <style>
       :root {
         --x-up: color-mix(in srgb, var(--fill-system-green) 72%, var(--text-primary));
@@ -21,39 +20,41 @@
       }
       .x-up { color: var(--x-up); }
       .x-down { color: var(--x-down); }
-      .x-sim { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr); gap: 16px; scroll-margin-top: 80px; }
-      .x-panel { background: var(--fill-tertiary); border-radius: var(--r-l); padding: 20px; min-width: 0; display: grid; gap: 16px; align-content: start; }
-      .x-panel--wide { grid-column: 1 / -1; }
-      .x-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
-      .x-label { font: var(--type-tag); color: var(--text-secondary); }
-      .x-live { display: inline-flex; align-items: center; gap: 8px; font: var(--type-label); }
-      .x-live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--fill-system-red); }
+      .x-top { display: flex; align-items: center; gap: 12px; min-height: var(--tap); }
+      .x-top b { font: var(--type-heading); }
+      .x-tiny { margin-left: auto; font: var(--type-caption); color: var(--text-secondary); white-space: nowrap; }
+      .x-card { background: var(--fill-tertiary); border-radius: var(--r-l); padding: 16px; min-width: 0; display: grid; gap: 12px; align-content: start; }
+      .x-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
+      .x-label { font: var(--type-caption); color: var(--text-secondary); }
+      .x-live { display: inline-flex; align-items: center; gap: 6px; font: var(--type-caption); color: var(--text-secondary); white-space: nowrap; }
+      .x-live::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--fill-system-red); }
       .x-live[data-ok="1"]::before { background: var(--fill-system-green); }
-      .x-price { font: var(--type-display); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+      .x-price { font: var(--type-display); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; line-height: 1.05; }
       .x-price small { font: var(--type-small); color: var(--text-secondary); margin-left: 6px; }
-      .x-panel .chart { margin: 0; }
-      .x-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-      .x-field { display: grid; gap: 6px; min-width: 0; }
-      .x-field--full { grid-column: 1 / -1; }
+      .x-mini { position: relative; height: 132px; margin-inline: -4px; }
+      .x-setrow { display: flex; gap: 8px; align-items: end; }
+      .x-setrow > .x-field:first-child { flex: 0 0 84px; }
+      .x-setrow > .x-field:last-child { flex: 1 1 auto; }
+      .x-field { display: grid; gap: 4px; min-width: 0; }
       .x-input { position: relative; }
       .x-input input {
-        width: 100%; min-height: 40px; padding: 0 56px 0 12px;
+        width: 100%; min-height: var(--tap); padding: 0 28px 0 10px;
         border: 1px solid var(--stroke-primary); border-radius: var(--r-s);
         background: var(--fill-primary-on); color: var(--text-primary);
         font: var(--type-body); font-variant-numeric: tabular-nums;
       }
-      .x-input span { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font: var(--type-caption); color: var(--text-secondary); pointer-events: none; }
-      .x-seg { display: flex; flex-wrap: wrap; gap: 2px; padding: 3px; border: 1px solid var(--stroke-primary); border-radius: var(--r-s); background: var(--fill-primary-on); }
+      .x-input span { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font: var(--type-caption); color: var(--text-secondary); pointer-events: none; }
+      .x-seg { display: flex; gap: 2px; padding: 2px; border: 1px solid var(--stroke-primary); border-radius: var(--r-s); background: var(--fill-primary-on); }
       .x-seg button {
-        flex: 1 1 0; min-width: 40px; min-height: 34px; padding: 0 6px; border: 0; border-radius: 9px;
-        background: transparent; color: var(--text-secondary); font: var(--type-label); font-variant-numeric: tabular-nums; cursor: pointer;
+        flex: 1 1 0; min-width: 0; min-height: 38px; padding: 0 2px; border: 0; border-radius: 9px;
+        background: transparent; color: var(--text-secondary); font: var(--type-tag); font-variant-numeric: tabular-nums; cursor: pointer;
       }
       .x-seg button:hover { background: var(--hover-wash); }
       .x-seg button[aria-pressed="true"] { background: var(--fill-primary); color: var(--text-primary-on); }
       .x-seg button:disabled, .x-input input:disabled { cursor: not-allowed; opacity: 0.55; }
       .x-go { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
       .x-go button {
-        min-height: 64px; border: 0; border-radius: var(--r-m); color: var(--hero-text);
+        min-height: 60px; border: 0; border-radius: var(--r-m); color: var(--hero-text);
         font: var(--weight-bold) 24px/1 var(--sans); cursor: pointer;
         transition: box-shadow var(--dur-quick) ease, transform var(--dur-quick) ease;
       }
@@ -65,137 +66,196 @@
       .x-short { background: var(--fill-system-red); }
       button.btn { cursor: pointer; }
       button.btn:disabled { opacity: 0.45; cursor: not-allowed; }
-      .x-coin { display: flex; }
-      .x-coin .btn { flex: 1; justify-content: center; min-height: var(--tap); }
-      .x-kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px 20px; }
-      .x-kv > div { display: grid; gap: 2px; min-width: 0; }
-      .x-kv b { font: var(--type-heading); font-variant-numeric: tabular-nums; }
-      .x-big { font: var(--type-figure); font-variant-numeric: tabular-nums; }
+      .x-textbtn {
+        justify-self: center; min-height: var(--tap); padding: 0 16px; border: 0; background: none; cursor: pointer;
+        color: var(--text-secondary); font: var(--type-label); text-decoration: underline; text-decoration-color: var(--stroke-primary); text-underline-offset: 3px;
+      }
+      .x-textbtn:hover { color: var(--text-primary); }
+      .x-textbtn:disabled { opacity: 0.45; cursor: not-allowed; }
+      .x-hint { font: var(--type-caption); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+      .x-badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: var(--r-pill); background: #00804e; color: var(--hero-text); font: var(--type-label); font-weight: var(--weight-bold); }
+      .x-badge[data-dir="-1"] { background: var(--fill-system-red); }
+      .x-big { font: var(--type-figure); font-variant-numeric: tabular-nums; line-height: 1.1; }
       .x-big small { font: var(--type-label); margin-left: 6px; }
-      .x-bar { position: relative; height: 10px; border-radius: var(--r-pill); margin: 10px 0 4px;
+      .x-close { width: 100%; justify-content: center; min-height: 48px; font: var(--type-label); }
+      .x-bar { position: relative; height: 10px; border-radius: var(--r-pill); margin: 6px 0 2px;
         background: linear-gradient(to right, color-mix(in srgb, var(--fill-system-red) 45%, transparent), var(--fill-primary-on) 50%, color-mix(in srgb, var(--fill-system-green) 45%, transparent)); }
       .x-bar__entry { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--text-secondary); }
       .x-bar__now { position: absolute; top: 50%; width: 18px; height: 18px; margin-left: -9px; transform: translateY(-50%); border-radius: 50%; background: var(--fill-primary); border: 3px solid var(--fill-tertiary); transition: left 200ms var(--ease-out); }
-      .x-bar-legend { display: flex; justify-content: space-between; gap: 8px; font: var(--type-caption); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
-      .x-idle { font: var(--type-body); color: var(--text-secondary); }
-      .x-idle strong { color: var(--text-primary); }
-      .x-countdown { font: var(--type-figure); font-variant-numeric: tabular-nums; }
+      .x-bar-legend { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; font: var(--type-caption); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+      .x-bar-legend b { display: block; color: var(--text-primary); font-weight: var(--weight-medium); }
+      .x-bar-legend span:nth-child(2) { text-align: center; }
+      .x-bar-legend span:last-child { text-align: right; }
+      .x-countdown { font: var(--type-heading); font-variant-numeric: tabular-nums; }
       .x-hidden { display: none !important; }
-      .x-store { margin-top: 16px; }
-      .x-store textarea {
+      .x-tiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+      .x-tiles--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .x-tile { display: grid; gap: 2px; min-width: 0; padding: 10px 6px; border-radius: var(--r-s); background: var(--fill-tertiary); text-align: center; }
+      .x-tile b { font: var(--weight-medium) 17px/1.2 var(--sans); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .x-tile span { font: var(--type-caption); color: var(--text-secondary); }
+      .x-fold .x-tile { background: var(--fill-primary-on); }
+      .x-cardhead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+      .x-cardhead h2 { font: var(--type-heading); }
+      .x-cardhead .x-textbtn { margin-right: -16px; }
+      .x-recent { list-style: none; margin: 0; padding: 0; }
+      .x-recent li { display: grid; grid-template-columns: minmax(0, 1fr) auto 72px; align-items: center; gap: 10px; min-height: var(--tap); border-top: 1px solid var(--stroke-secondary); font: var(--type-small); }
+      .x-recent li:first-child { border-top: 0; }
+      .x-recent li small { margin-left: 6px; font: var(--type-caption); color: var(--text-secondary); }
+      .x-recent .x-num { text-align: right; font-weight: var(--weight-bold); font-variant-numeric: tabular-nums; white-space: nowrap; }
+      .x-recent .x-empty { display: block; color: var(--text-secondary); }
+      .x-tag { padding: 2px 8px; border-radius: var(--r-pill); background: var(--fill-primary-on); color: var(--text-secondary); font: var(--type-caption); white-space: nowrap; }
+      .x-tag[data-k="tp"] { color: var(--x-up); }
+      .x-tag[data-k="liq"] { color: var(--x-down); }
+      .x-fold { background: var(--fill-tertiary); border-radius: var(--r-l); min-width: 0; }
+      .x-fold > summary {
+        display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 16px; cursor: pointer; list-style: none;
+        font: var(--type-label); font-weight: var(--weight-medium);
+      }
+      .x-fold > summary::-webkit-details-marker { display: none; }
+      .x-fold > summary::after {
+        content: ""; flex: none; width: 7px; height: 7px; margin: -3px 2px 0 0;
+        border-right: 1.5px solid var(--text-secondary); border-bottom: 1.5px solid var(--text-secondary);
+        transform: rotate(45deg); transition: transform var(--dur-quick) var(--ease-out);
+      }
+      .x-fold[open] > summary::after { transform: rotate(-135deg); margin-top: 3px; }
+      .x-fold__hint { margin-left: auto; font: var(--type-caption); font-weight: var(--weight-regular); color: var(--text-secondary); text-align: right; }
+      .x-fold__body { display: grid; gap: 12px; padding: 0 16px 16px; min-width: 0; }
+      .x-more { background: none; border-top: 1px solid var(--stroke-secondary); border-radius: 0; }
+      .x-more > summary { min-height: var(--tap); padding: 0; }
+      .x-more > .x-fold__body { padding: 0 0 4px; }
+      .x-more .x-input input { background: var(--fill-primary-on); }
+      .x-help > summary { list-style: none; display: inline-grid; place-items: center; width: var(--tap); height: var(--tap); margin: -10px -12px -10px 0; cursor: pointer; }
+      .x-help > summary::-webkit-details-marker { display: none; }
+      .x-help > summary span { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--stroke-primary); font: var(--type-caption); color: var(--text-secondary); }
+      .x-help[open] > summary span { background: var(--fill-primary); color: var(--text-primary-on); border-color: transparent; }
+      .x-helptext { font: var(--type-caption); color: var(--text-secondary); }
+      .x-toasts { position: fixed; z-index: 30; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); transform: translateX(-50%); width: min(480px, calc(100% - 2 * var(--gutter))); display: grid; gap: 8px; pointer-events: none; }
+      .x-toast {
+        display: flex; align-items: center; gap: 8px; padding: 4px 4px 4px 14px; border-radius: var(--r-m);
+        background: var(--fill-primary); color: var(--text-primary-on); box-shadow: var(--hark-shadow); font: var(--type-small);
+        pointer-events: auto; animation: x-in var(--dur-quick) var(--ease-out);
+      }
+      .x-toast p { flex: 1; min-width: 0; padding-block: 8px; }
+      .x-toast[data-k="err"]::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--fill-system-red); }
+      .x-toast button { flex: none; width: var(--tap); height: var(--tap); border: 0; border-radius: var(--r-s); background: none; color: inherit; font: var(--type-heading); cursor: pointer; }
+      @keyframes x-in { from { opacity: 0; transform: translateY(8px); } }
+      @media (prefers-reduced-motion: reduce) { .x-toast { animation: none; } }
+      .x-fold textarea {
         width: 100%; min-height: 140px; padding: 10px 12px; resize: vertical;
         border: 1px solid var(--stroke-primary); border-radius: var(--r-s);
         background: var(--fill-primary-on); color: var(--text-primary);
         font: var(--type-caption); font-family: "Geist Mono", ui-monospace, monospace;
       }
-      .x-store input[type="file"] { font: var(--type-small); color: var(--text-secondary); max-width: 100%; min-height: var(--tap); }
-      .x-store .links { margin: 0; }
+      .x-fold input[type="file"] { font: var(--type-small); color: var(--text-secondary); max-width: 100%; min-height: var(--tap); }
       .x-msg { font: var(--type-small); color: var(--text-secondary); }
       .x-input input.x-plain { padding-right: 12px; font-variant-numeric: normal; }
       .x-check { display: inline-flex; align-items: center; gap: 8px; min-height: var(--tap); font: var(--type-label); cursor: pointer; }
       .x-check input { width: 18px; height: 18px; margin: 0; accent-color: var(--fill-primary); }
-      @media (max-width: 899px) { .x-sim { grid-template-columns: minmax(0, 1fr); } }
-      @media (max-width: 420px) { .x-fields { grid-template-columns: 1fr; } }
+      .x-wrap { display: grid; gap: 12px; width: 100%; max-width: 640px; margin-inline: auto; }
+      .x-foot { padding-top: 8px; text-align: center; font: var(--type-caption); color: var(--text-secondary); }
+      .x-seg button { min-width: var(--tap); }
+      @media (max-width: 479px) {
+        .x-setrow--main { flex-wrap: wrap; row-gap: 8px; }
+        .x-setrow--main > .x-field:first-child { order: 2; flex: 1 1 100%; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 10px; }
+        .x-setrow--main > .x-field:last-child { order: 1; flex: 1 1 100%; }
+      }
+      @media (max-width: 599px) { .x-card { padding: 14px; } .x-fold > summary { padding-inline: 14px; } .x-fold__body { padding-inline: 14px; } .x-tile b { font-size: 15px; } }
     </style>
   </head>
   <body>
     <div class="page" id="top">
-      <header class="nav glass" data-auto></header>
-      <main class="main">
-        <header class="shop-title">
-          <h1>Motivator · BTC 高杠杆十分钟模拟器</h1>
-          <p class="shop-title__intro">用币安实时价格，模拟 10 美金、高杠杆、10 分钟定胜负。纯模拟，不涉及真钱。</p>
+      <main class="main x-wrap">
+        <header class="x-top">
+          <b>Motivator</b>
+          <span class="x-live" id="src" data-ok="0">连接中…</span>
+          <span class="x-tiny">纯模拟 · 不涉及真钱</span>
         </header>
 
-        <aside class="callout x-hidden" id="notice" aria-label="离线补算" aria-live="polite">
-          <p class="callout__head">离线补算</p>
-          <p class="callout__lead" id="notice-lead"></p>
-        </aside>
-
-        <section class="x-sim" id="sim" data-nav="模拟器" aria-label="模拟器">
-          <div class="x-panel">
-            <div class="x-row">
-              <span class="x-label">BTCUSDT</span>
-              <span class="x-live" id="src" data-ok="0">连接中…</span>
-            </div>
+        <section class="x-card" id="sim" aria-label="模拟器">
+          <div class="x-row">
             <div class="x-price" id="price" aria-live="off">—</div>
-            <figure class="chart">
-              <figcaption class="chart__cap">最近 15 分钟价格<small>开始用 1 分钟 K 线收盘价补齐，之后每秒采样一次，USDT</small></figcaption>
-              <div class="chart__canvas"><canvas id="px-chart" role="img" aria-label="BTCUSDT 最近 15 分钟价格走势"></canvas></div>
-            </figure>
+            <span class="x-label">BTCUSDT · 15 分钟</span>
           </div>
+          <div class="x-mini"><canvas id="px-chart" role="img" aria-label="BTCUSDT 最近 15 分钟价格走势"></canvas></div>
 
-          <div class="x-panel" id="controls">
-            <div class="x-fields">
+          <div id="controls" class="x-card" style="padding: 0; background: none">
+            <div class="x-setrow x-setrow--main">
               <label class="x-field">
-                <span class="x-label">本金</span>
-                <span class="x-input"><input id="margin" type="number" min="1" step="1" value="10" inputmode="decimal" /><span>USDT</span></span>
+                <span class="x-label">本金 USDT</span>
+                <span class="x-input"><input id="margin" type="number" min="1" step="1" value="10" inputmode="decimal" /><span>U</span></span>
               </label>
-              <label class="x-field">
-                <span class="x-label">止盈（占本金）</span>
-                <span class="x-input"><input id="tp" type="number" min="1" step="10" value="100" inputmode="decimal" /><span>%</span></span>
-              </label>
-              <div class="x-field x-field--full">
+              <div class="x-field">
                 <span class="x-label">杠杆</span>
                 <div class="x-seg" id="lev" role="group" aria-label="杠杆">
                   <button type="button" data-v="10">10×</button><button type="button" data-v="20">20×</button><button type="button" data-v="50" aria-pressed="true">50×</button><button type="button" data-v="75">75×</button><button type="button" data-v="100">100×</button><button type="button" data-v="125">125×</button>
                 </div>
               </div>
-              <div class="x-field">
-                <span class="x-label">时限</span>
-                <div class="x-seg" id="mins" role="group" aria-label="时限">
-                  <button type="button" data-v="1">1 分</button><button type="button" data-v="5">5 分</button><button type="button" data-v="10" aria-pressed="true">10 分</button><button type="button" data-v="30">30 分</button>
-                </div>
-              </div>
-              <div class="x-field">
-                <span class="x-label">模式</span>
-                <div class="x-seg" id="mode" role="group" aria-label="模式">
-                  <button type="button" data-v="real" aria-pressed="true">真实</button><button type="button" data-v="ideal">理想</button>
-                </div>
-              </div>
             </div>
-            <p class="fineprint" id="preview">—</p>
+            <p class="x-hint" id="preview">—</p>
             <div class="x-go">
               <button type="button" class="x-long" id="go-long">做多</button>
               <button type="button" class="x-short" id="go-short">做空</button>
             </div>
-            <div class="x-coin"><button type="button" class="btn" id="go-coin">随机方向（抛硬币）</button></div>
+            <button type="button" class="x-textbtn" id="go-coin">抛硬币</button>
+            <details class="x-fold x-more" id="more">
+              <summary>更多设置 <span class="x-fold__hint" id="more-hint">10分钟 · 止盈100% · 真实</span></summary>
+              <div class="x-fold__body">
+                <div class="x-field">
+                  <span class="x-label">时限</span>
+                  <div class="x-seg" id="mins" role="group" aria-label="时限">
+                    <button type="button" data-v="1">1 分</button><button type="button" data-v="5">5 分</button><button type="button" data-v="10" aria-pressed="true">10 分</button><button type="button" data-v="30">30 分</button>
+                  </div>
+                </div>
+                <div class="x-setrow">
+                  <label class="x-field">
+                    <span class="x-label">止盈</span>
+                    <span class="x-input"><input id="tp" type="number" min="1" step="10" value="100" inputmode="decimal" /><span>%</span></span>
+                  </label>
+                  <div class="x-field">
+                    <span class="x-label">模式</span>
+                    <div class="x-seg" id="mode" role="group" aria-label="模式">
+                      <button type="button" data-v="real" aria-pressed="true">真实</button><button type="button" data-v="ideal">理想</button>
+                    </div>
+                  </div>
+                </div>
+                <p class="x-hint" id="preview-fee">—</p>
+              </div>
+            </details>
           </div>
 
-          <div class="x-panel x-panel--wide" id="position" aria-live="polite">
-            <div id="idle" class="x-idle"><strong>当前空仓。</strong> 选好参数，点做多、做空或抛硬币开一局。</div>
-            <div id="live" class="x-hidden">
-              <div class="x-row">
-                <p><span class="chip chip--solid" id="p-tag">持仓中</span> <span class="x-label" id="p-desc"></span></p>
-                <div><span class="x-label">剩余 </span><span class="x-countdown" id="p-left">10:00</span></div>
-              </div>
-              <div class="x-kv" style="margin-top: 16px">
-                <div><span class="x-label">未实现盈亏（扣费后）</span><span class="x-big" id="p-pnl">—</span></div>
-                <div><span class="x-label">入场价</span><b id="p-entry">—</b></div>
-                <div><span class="x-label">当前价</span><b id="p-now">—</b></div>
-                <div><span class="x-label">强平价</span><b id="p-liq">—</b></div>
-                <div><span class="x-label">止盈价</span><b id="p-tp">—</b></div>
-              </div>
-              <div class="x-bar" aria-hidden="true"><span class="x-bar__entry" id="bar-entry"></span><span class="x-bar__now" id="bar-now"></span></div>
-              <div class="x-bar-legend"><span id="bar-l">强平</span><span id="bar-r">止盈</span></div>
-              <div class="links" style="margin-top: 16px"><button type="button" class="btn" id="close">手动平仓</button></div>
+          <div id="live" class="x-hidden" style="display: grid; gap: 10px" aria-live="polite">
+            <div class="x-row">
+              <span class="x-badge" id="p-badge" data-dir="1">做多 50×</span>
+              <span><span class="x-label">剩余 </span><span class="x-countdown" id="p-left">10:00</span></span>
             </div>
+            <div>
+              <div class="x-big" id="p-pnl">—</div>
+              <p class="x-label" id="p-desc"></p>
+            </div>
+            <div>
+              <div class="x-bar" aria-hidden="true"><span class="x-bar__entry" id="bar-entry"></span><span class="x-bar__now" id="bar-now"></span></div>
+              <div class="x-bar-legend"><span>强平<b id="p-liq">—</b></span><span>当前<b id="p-now">—</b></span><span>止盈<b id="p-tp">—</b></span></div>
+            </div>
+            <button type="button" class="btn x-close" id="close">手动平仓</button>
           </div>
         </section>
 
-        <section class="section" id="log" data-nav="记录">
-          <div class="head">
-            <h2>本次的模拟战绩</h2>
-            <p class="head__sub">能自动保存就自动保存；不能时用下方的导出/导入长期留存。</p>
+        <section class="x-tiles" aria-label="战绩汇总">
+          <div class="x-tile"><b id="s-n">0</b><span>局数</span></div>
+          <div class="x-tile"><b id="s-win">—</b><span>胜率</span></div>
+          <div class="x-tile"><b id="s-tp">0</b><span>翻倍</span></div>
+          <div class="x-tile"><b id="s-liq">0</b><span>爆仓</span></div>
+          <div class="x-tile"><b id="s-pnl">0.00</b><span>累计盈亏</span></div>
+        </section>
+
+        <section class="x-card" id="log" aria-label="战绩">
+          <div class="x-cardhead">
+            <h2>战绩</h2>
+            <button type="button" class="x-textbtn" id="view-all" aria-expanded="false" aria-controls="all">查看全部</button>
           </div>
-          <section class="stats" aria-label="战绩汇总">
-            <div class="stat"><span class="stat__fig" id="s-n">0</span><span class="stat__label">总局数</span></div>
-            <div class="stat"><span class="stat__fig" id="s-win">—</span><span class="stat__label">胜率</span></div>
-            <div class="stat"><span class="stat__fig" id="s-tp">0</span><span class="stat__label">翻倍次数</span></div>
-            <div class="stat"><span class="stat__fig" id="s-liq">0</span><span class="stat__label">爆仓次数</span></div>
-            <div class="stat"><span class="stat__fig" id="s-pnl">0.00</span><span class="stat__label">累计盈亏 USDT</span></div>
-            <div class="stat"><span class="stat__fig" id="s-fee">0.00</span><span class="stat__label">手续费合计 USDT</span></div>
-          </section>
+          <ul class="x-recent" id="recent"><li><span class="x-empty">还没有对局</span></li></ul>
+          <div id="all" class="x-hidden" style="display: grid; gap: 12px">
+          <div class="x-row"><span class="x-label">手续费合计 <b id="s-fee">0.00</b> USDT</span><button type="button" class="btn" id="reset">重置</button></div>
           <div class="table-wrap">
             <table>
               <thead>
@@ -215,13 +275,12 @@
               </tbody>
             </table>
           </div>
-          <div class="links"><button type="button" class="btn" id="reset">重置</button></div>
+          </div>
+        </section>
 
-          <div class="x-panel x-store" id="store" aria-label="保存与恢复记录">
-            <div class="x-row">
-              <span class="x-label">保存与恢复</span>
-              <span class="x-live" id="save-status" data-ok="0">检测中…</span>
-            </div>
+        <details class="x-fold" id="store">
+          <summary>记录：导出 / 导入 <span class="x-fold__hint"><span class="x-live" id="save-status" data-ok="0">检测中…</span></span></summary>
+          <div class="x-fold__body">
             <div class="links">
               <button type="button" class="btn" id="exp-json">导出记录</button>
               <button type="button" class="btn" id="exp-csv">导出 CSV</button>
@@ -237,7 +296,6 @@
                 <button type="button" class="btn" id="exp-copy">复制</button>
                 <button type="button" class="btn" id="exp-dl">下载文件</button>
               </div>
-              <p class="x-msg" id="exp-msg" aria-live="polite"></p>
             </div>
 
             <div id="imp-box" class="x-hidden" style="display: grid; gap: 10px">
@@ -253,23 +311,26 @@
                 <button type="button" class="btn" id="imp-go">合并导入</button>
                 <button type="button" class="btn" id="imp-cancel">取消</button>
               </div>
-              <p class="x-msg" id="imp-msg" aria-live="polite"></p>
             </div>
-            <p class="fineprint">导入会与当前记录合并，按每局结束时间去重，再重新计算战绩。</p>
+            <p class="x-label">导入与当前记录合并，按结束时间去重。</p>
           </div>
+        </details>
 
-          <div class="x-panel x-store" id="gh" aria-label="GitHub 同步">
-            <div class="x-row">
-              <span class="x-label">GitHub 同步</span>
-              <span class="x-live" id="gh-status" data-ok="0" aria-live="polite">检测中…</span>
-            </div>
-            <p class="x-msg x-hidden" id="gh-off">在 <a class="link" href="https://yanglei-985.github.io/Motivator/" target="_blank" rel="noopener">https://yanglei-985.github.io/Motivator/</a> 打开才能同步到 GitHub</p>
-            <div id="gh-write" style="display: grid; gap: 12px">
-              <label class="x-field">
-                <span class="x-label">GitHub Token（只存在你这台设备的浏览器里）</span>
+        <details class="x-fold" id="gh">
+          <summary>GitHub 同步 <span class="x-fold__hint"><span class="x-live" id="gh-status" data-ok="0" aria-live="polite">检测中…</span></span></summary>
+          <div class="x-fold__body">
+            <p class="x-msg x-hidden" id="gh-off">在 <a class="link" href="https://yanglei-985.github.io/Motivator/" target="_blank" rel="noopener">yanglei-985.github.io/Motivator</a> 打开才能同步</p>
+            <div id="gh-write" style="display: grid; gap: 10px">
+              <div class="x-field">
+                <div class="x-row">
+                  <label class="x-label" for="gh-token">GitHub Token（仅存本机）</label>
+                  <details class="x-help">
+                    <summary aria-label="Token 说明"><span>?</span></summary>
+                  </details>
+                </div>
+                <p class="x-helptext x-hidden" id="gh-help">GitHub → Settings → Developer settings → Fine-grained tokens 新建，仓库只选 yanglei-985.github.io，权限 Contents: Read and write。记录存于 Motivator/records.json，打开页面时自动公开读取合并，无需 Token。</p>
                 <span class="x-input"><input id="gh-token" class="x-plain" type="password" autocomplete="off" spellcheck="false" /></span>
-              </label>
-              <p class="fineprint">在 GitHub → Settings → Developer settings → Fine-grained tokens 新建一个 Token，仓库只选 yanglei-985.github.io，权限 Contents: Read and write。</p>
+              </div>
               <div class="links">
                 <button type="button" class="btn" id="gh-save">保存</button>
                 <button type="button" class="btn" id="gh-clear">清除Token</button>
@@ -277,81 +338,74 @@
               </div>
               <label class="x-check"><input type="checkbox" id="gh-auto" /> 每局结束后自动同步</label>
             </div>
-            <p class="fineprint">记录存放在 yanglei-985.github.io 仓库的 Motivator/records.json；打开页面时自动公开读取并合并，无需 Token。</p>
           </div>
-        </section>
+        </details>
 
-        <section class="section" id="backtest" data-nav="回测">
-          <div class="head">
-            <h2>一年回测：十分钟里，BTC 很少走远</h2>
+        <details class="x-fold" id="backtest">
+          <summary>一年回测结果 <span class="x-fold__hint">BTCUSDT 永续</span></summary>
+          <div class="x-fold__body">
+            <div class="x-tiles x-tiles--3">
+              <div class="x-tile"><b>525,600</b><span>1 分钟 K 线<br />2025.11–2026.10</span></div>
+              <div class="x-tile"><b>4 万次</b><span>每组 10 分钟仓位<br />随机时间与方向</span></div>
+              <div class="x-tile"><b>0.08%</b><span>10 分钟收盘<br />涨跌中位数</span></div>
+            </div>
+            <p class="x-label">10 分钟内最大波动达到…的窗口占比</p>
+            <div class="x-tiles">
+              <div class="x-tile"><b>34.5%</b><span>≥0.2%</span></div>
+              <div class="x-tile"><b>5.6%</b><span>≥0.5%</span></div>
+              <div class="x-tile"><b>1.5%</b><span>≥0.8%</span></div>
+              <div class="x-tile"><b>0.73%</b><span>≥1%</span></div>
+              <div class="x-tile"><b>0.05%</b><span>≥2%</span></div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <caption>止盈为本金 100%</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">设置</th>
+                    <th scope="col">爆仓</th>
+                    <th scope="col">翻倍</th>
+                    <th scope="col">到时平仓</th>
+                    <th scope="col">胜率</th>
+                    <th scope="col">平均每局</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">50× 真实 <small>亏损主要是手续费：0.05%×2×50 = 5%</small></th>
+                    <td class="num">约 0.1%</td>
+                    <td class="num">几乎为 0</td>
+                    <td class="num">几乎全部</td>
+                    <td class="num">约 21%</td>
+                    <td class="num">−5%</td>
+                  </tr>
+                  <tr class="is-highlight">
+                    <th scope="row">125× 真实 <small>反向约 0.4% 即强平，正向 0.8% 才翻倍</small></th>
+                    <td class="num">4.9%</td>
+                    <td class="num">1.3%</td>
+                    <td class="num">约 94%</td>
+                    <td class="num">约 21%</td>
+                    <td class="num">约 −14%</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">各杠杆 理想 <small>无手续费，就是抛硬币</small></th>
+                    <td class="muted">—</td>
+                    <td class="muted">—</td>
+                    <td class="muted">—</td>
+                    <td class="num">约 50%</td>
+                    <td class="num">≈ 0</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="x-msg"><strong>结论：</strong>BTC 10 分钟很少走出 2%，杠杆越高，手续费和强平线越不利。</p>
           </div>
-          <div class="prose">
-            <p>用币安 BTCUSDT 永续合约 2025年11月至2026年10月共 525,600 根 1 分钟 K 线，随机时间、随机方向，各开 4 万次 10 分钟仓位的结果。</p>
-          </div>
-          <section class="stats" aria-label="10 分钟内最大波动">
-            <div class="stat"><span class="stat__fig">34.5%</span><span class="stat__label">最大波动 ≥0.2%</span></div>
-            <div class="stat"><span class="stat__fig">5.6%</span><span class="stat__label">≥0.5%</span></div>
-            <div class="stat"><span class="stat__fig">1.5%</span><span class="stat__label">≥0.8%</span></div>
-            <div class="stat"><span class="stat__fig">0.73%</span><span class="stat__label">≥1%</span></div>
-            <div class="stat"><span class="stat__fig">0.05%</span><span class="stat__label">≥2%</span></div>
-          </section>
-          <p class="fineprint">占全部 10 分钟窗口的比例。10 分钟收盘涨跌中位数仅 0.08%。</p>
-          <div class="table-wrap">
-            <table>
-              <caption>每组 4 万次 10 分钟仓位，止盈为本金 100%</caption>
-              <thead>
-                <tr>
-                  <th scope="col">设置</th>
-                  <th scope="col">爆仓</th>
-                  <th scope="col">翻倍</th>
-                  <th scope="col">到时平仓</th>
-                  <th scope="col">胜率</th>
-                  <th scope="col">平均每局</th>
-                  <th scope="col">说明</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <th scope="row">50 倍 <small>真实</small></th>
-                  <td class="num">约 0.1%</td>
-                  <td class="num">几乎为 0</td>
-                  <td class="num">几乎全部</td>
-                  <td class="num">约 21%</td>
-                  <td class="num">−5%</td>
-                  <td class="muted">亏损主要是手续费：0.05%×2×50 = 5%</td>
-                </tr>
-                <tr class="is-highlight">
-                  <th scope="row">125 倍 <small>真实</small></th>
-                  <td class="num">4.9%</td>
-                  <td class="num">1.3%</td>
-                  <td class="num">约 94%</td>
-                  <td class="num">约 21%</td>
-                  <td class="num">约 −14%</td>
-                  <td class="muted">反向约 0.4% 即强平，正向 0.8% 才翻倍</td>
-                </tr>
-                <tr>
-                  <th scope="row">各杠杆 <small>理想，无手续费</small></th>
-                  <td class="muted">—</td>
-                  <td class="muted">—</td>
-                  <td class="muted">—</td>
-                  <td class="num">约 50%</td>
-                  <td class="num">≈ 0</td>
-                  <td class="muted">就是抛硬币</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <aside class="callout" aria-label="结论">
-            <p class="callout__head">结论</p>
-            <p class="callout__lead"><strong>BTC 在 10 分钟内很少走出 2%，想“十分钟定胜负”只能把杠杆拉满，</strong>而杠杆越高，手续费和强平线对你越不利。</p>
-          </aside>
-        </section>
+        </details>
       </main>
-      <footer class="foot">
-        <p>数据来源：币安公开行情接口（data.binance.vision / fstream.binance.com）。本页面仅为模拟和教育用途，不构成投资建议。</p>
-        <nav aria-label="返回各部分" data-auto></nav>
-        <a class="badge" href="https://hark.com/" target="_blank" rel="noopener"><span class="hark-mark"></span><span>built by hark</span></a>
+      <footer class="foot x-wrap">
+        <p>数据：币安公开行情 · 仅供模拟，不构成投资建议</p>
       </footer>
+      <div class="x-toasts" id="toasts" aria-live="polite"></div>
     </div>
     <script src="hark.js"></script>
     <script src="chart.js"></script>
@@ -438,7 +492,7 @@
           options: {
             animation: false,
             scales: {
-              x: { type: "linear", ticks: { callback: function (v) { return hhmm(v); }, maxTicksLimit: 6 } },
+              x: { type: "linear", ticks: { callback: function (v) { return hhmm(v); }, maxTicksLimit: 4 } },
               y: { ticks: { callback: function (v) { return v.toLocaleString("en-US"); } } },
             },
             plugins: {
@@ -496,13 +550,34 @@
         }
         function renderPreview() {
           var p = params();
-          if (!p.ok) { $("preview").textContent = "本金和止盈需大于 0。"; return; }
+          $("more-hint").textContent = p.mins + "分钟 · 止盈" + (isFinite(p.tp) ? p.tp : "—") + "% · " + (p.real ? "真实" : "理想");
+          if (!p.ok) { $("preview").textContent = "本金和止盈需大于 0"; $("preview-fee").textContent = ""; return; }
           var N = p.m * p.L, openFee = N * p.fee, buf = p.m - openFee - N * p.mmr;
           var liqMove = (buf / N) * 100, tpMove = p.tp / p.L;
-          $("preview").textContent =
-            "名义仓位 " + N.toLocaleString("en-US", { maximumFractionDigits: 2 }) + " USDT · 反向 " + liqMove.toFixed(2) + "% 强平 · 正向 " + tpMove.toFixed(2) + "% 止盈 · " +
+          $("preview").textContent = "反向 " + liqMove.toFixed(2) + "% 强平 · 正向 " + tpMove.toFixed(2) + "% 止盈";
+          $("preview-fee").textContent =
+            "名义仓位 " + N.toLocaleString("en-US", { maximumFractionDigits: 2 }) + " USDT · " +
             (p.real ? "双边手续费约 " + (2 * N * p.fee).toFixed(2) + " USDT（本金的 " + (100 * N * p.fee * 2 / p.m).toFixed(1) + "%）" : "无手续费、无维持保证金");
         }
+
+        /* ---------- toasts ---------- */
+        function toast(text, kind, key, sticky) {
+          var box = $("toasts"), el = key ? box.querySelector('[data-key="' + key + '"]') : null;
+          if (!el) {
+            el = document.createElement("div");
+            el.className = "x-toast";
+            if (key) el.setAttribute("data-key", key);
+            el.innerHTML = '<p></p><button type="button" aria-label="关闭">×</button>';
+            el.querySelector("button").addEventListener("click", function () { el.remove(); });
+            box.appendChild(el);
+            while (box.children.length > 3) box.firstElementChild.remove();
+          }
+          el.setAttribute("data-k", kind || "");
+          el.querySelector("p").textContent = text;
+          clearTimeout(el._t);
+          if (!sticky) el._t = setTimeout(function () { el.remove(); }, 5000);
+        }
+        function untoast(key) { var el = $("toasts").querySelector('[data-key="' + key + '"]'); if (el) el.remove(); }
 
         function lock(on) {
           document.querySelectorAll("#controls button, #controls input").forEach(function (el) { el.disabled = on; });
@@ -513,7 +588,7 @@
         function open(dir, coin) {
           if (S.pos || S.pend) return;
           if (S.price == null || !S.last) {
-            $("idle").innerHTML = "<strong>还没收到实时价格。</strong> 正在连接币安行情（" + (S.source || "连接中") + "），收到价格后再点一次即可开仓。";
+            toast("还没收到实时价格，正在连接币安行情，稍后再点", "", "noprice");
             return;
           }
           var p = params();
@@ -557,7 +632,7 @@
           if (off) rebuild(); else { addRow(r); renderStats(); }
           persist();
           lock(false);
-          $("idle").innerHTML = "<strong>上一局 #" + r.i + "：" + esc(label) + "，" + sign(pnl) + " USDT（" + sign((pnl / P.m) * 100, 1) + "%）。</strong> 再来一局？";
+          if (!off) toast("#" + r.i + " " + label + " · " + sign(pnl) + " USDT（" + sign((pnl / P.m) * 100, 1) + "%）", "", "round");
           render(); drawChart();
           if (ghAuto()) ghSync();
           return r;
@@ -589,8 +664,15 @@
           $("s-tp").textContent = L.filter(function (r) { return r.kind === "tp"; }).length;
           $("s-liq").textContent = L.filter(function (r) { return r.kind === "liq"; }).length;
           $("s-pnl").textContent = sign(pnl);
-          $("s-pnl").className = "stat__fig " + cls(pnl);
+          $("s-pnl").className = cls(pnl);
           $("s-fee").textContent = fees.toFixed(2);
+          var recent = L.slice(-5).reverse();
+          $("recent").innerHTML = recent.length ? recent.map(function (r) {
+            return "<li><span>#" + r.i + " " + (r.dir > 0 ? "做多" : "做空") + " " + r.L + "×<small>" + (r.real ? "真实" : "理想") + (r.coin ? " · 抛硬币" : "") + "</small></span>" +
+              '<span class="x-tag" data-k="' + r.kind + '">' + esc(r.label) + "</span>" +
+              '<span class="x-num ' + cls(r.pnl) + '">' + sign(r.pnl) + "</span></li>";
+          }).join("") : '<li><span class="x-empty">还没有对局</span></li>';
+          $("view-all").classList.toggle("x-hidden", !n);
         }
 
         /* ---------- render ---------- */
@@ -599,17 +681,19 @@
         function render() {
           if (S.price != null) $("price").innerHTML = "$" + fmtP(S.price) + "<small>USDT</small>";
           var P = S.pos;
-          $("idle").classList.toggle("x-hidden", !!P);
+          $("controls").classList.toggle("x-hidden", !!P);
           $("live").classList.toggle("x-hidden", !P);
           if (!P) return;
           var px = S.price != null ? S.price : P.e;
           var gross = P.dir * P.qty * (px - P.e);
           var net = gross - P.openFee - P.qty * px * P.fee;
-          $("p-desc").textContent = (P.dir > 0 ? "做多" : "做空") + (P.coin ? "（抛硬币）" : "") + " · " + P.L + "× · " + (P.real ? "真实" : "理想") + " · 本金 " + P.m + " USDT · 时限 " + P.mins + " 分钟";
+          var bd = $("p-badge");
+          bd.setAttribute("data-dir", P.dir > 0 ? "1" : "-1");
+          bd.textContent = (P.dir > 0 ? "做多 " : "做空 ") + P.L + "×" + (P.coin ? " · 硬币" : "");
+          $("p-desc").textContent = "未实现盈亏（扣费后）· 入场 " + fmtP(P.e) + " · 本金 " + P.m + " · " + (P.real ? "真实" : "理想");
           var pe = $("p-pnl");
           pe.innerHTML = sign(net) + " USDT<small>" + sign((net / P.m) * 100, 1) + "%</small>";
           pe.className = "x-big " + cls(net);
-          $("p-entry").textContent = fmtP(P.e);
           $("p-now").textContent = fmtP(px);
           $("p-liq").textContent = fmtP(P.liq);
           $("p-tp").textContent = fmtP(P.tpP);
@@ -619,8 +703,6 @@
           var f = function (v) { return Math.max(0, Math.min(1, (v - P.liq) / span)) * 100 + "%"; };
           $("bar-now").style.left = f(px);
           $("bar-entry").style.left = f(P.e);
-          $("bar-l").textContent = "强平 " + fmtP(P.liq);
-          $("bar-r").textContent = "止盈 " + fmtP(P.tpP);
         }
 
         /* ---------- buttons ---------- */
@@ -630,11 +712,18 @@
         $("close").addEventListener("click", function () { if (S.pos && S.price != null) close("manual", S.price); });
         $("reset").addEventListener("click", function () {
           S.pos = null; S.pend = null; S.log = []; S.n = 0;
-          dropPos(); $("notice").classList.add("x-hidden");
+          dropPos(); $("toasts").innerHTML = "";
           $("rows").innerHTML = '<tr id="empty"><td class="muted" colspan="8">还没有对局。</td></tr>';
-          $("idle").innerHTML = "<strong>当前空仓。</strong> 选好参数，点做多、做空或抛硬币开一局。";
+          showAll(false);
           lock(false); renderStats(); persist(); render(); drawChart();
         });
+        function showAll(on) {
+          $("all").classList.toggle("x-hidden", !on);
+          $("view-all").setAttribute("aria-expanded", on ? "true" : "false");
+          $("view-all").textContent = on ? "收起" : "查看全部";
+        }
+        $("view-all").addEventListener("click", function () { showAll($("all").classList.contains("x-hidden")); });
+        document.querySelector(".x-help").addEventListener("toggle", function () { $("gh-help").classList.toggle("x-hidden", !this.open); });
 
         /* ---------- save / restore ---------- */
         var KEY = "btc-sim-records-v1", store = false;
@@ -653,7 +742,7 @@
         function persist() {
           if (!store) return;
           try { localStorage.setItem(KEY, JSON.stringify(S.log)); setStatus(true, "已自动保存"); }
-          catch (e) { store = false; setStatus(false, "此环境无法自动保存，请用导出/导入"); }
+          catch (e) { store = false; setStatus(false, "未自动保存"); toast("此环境无法自动保存，请用导出/导入", "err", "store", true); }
         }
         function clean(r) {
           if (!r || typeof r !== "object") return null;
@@ -702,7 +791,7 @@
           setStatus(true, "已自动保存");
         } catch (e) {
           store = false;
-          setStatus(false, "此环境无法自动保存，请用导出/导入");
+          setStatus(false, "未自动保存");
         }
 
         function pad2(n) { return pad(n); }
@@ -731,9 +820,9 @@
             a.href = url; a.download = cur.name; a.style.display = "none";
             document.body.appendChild(a); a.click(); a.remove();
             setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
-            $("exp-msg").textContent = "已尝试下载 " + cur.name + "。若没有弹出下载，请复制下方内容自行保存。";
+            toast("已尝试下载 " + cur.name + "，没弹出就复制内容自行保存", "", "io");
           } catch (e) {
-            $("exp-msg").textContent = "此环境无法下载文件，请复制下方内容自行保存。";
+            toast("无法下载文件，请复制内容自行保存", "err", "io");
           }
         }
         function showExport(kind) {
@@ -751,7 +840,7 @@
           ta.focus(); ta.select(); ta.setSelectionRange(0, ta.value.length);
           var ok = false;
           try { ok = document.execCommand("copy"); } catch (e) {}
-          $("exp-msg").textContent = ok ? "已复制到剪贴板。" : "无法自动复制，内容已全选，请按 Ctrl/⌘ + C。";
+          toast(ok ? "已复制到剪贴板" : "无法自动复制，内容已全选，请手动复制", ok ? "" : "err", "io");
         }
         $("exp-json").addEventListener("click", function () { showExport("json"); });
         $("exp-csv").addEventListener("click", function () { showExport("csv"); });
@@ -759,13 +848,12 @@
         $("exp-copy").addEventListener("click", function () {
           var text = $("exp-text").value;
           if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(text).then(function () { $("exp-msg").textContent = "已复制到剪贴板。"; }, fallbackCopy);
+            navigator.clipboard.writeText(text).then(function () { toast("已复制到剪贴板", "", "io"); }, fallbackCopy);
           } else fallbackCopy();
         });
         $("imp-open").addEventListener("click", function () {
           $("exp-box").classList.add("x-hidden");
           $("imp-box").classList.remove("x-hidden");
-          $("imp-msg").textContent = "";
         });
         $("imp-cancel").addEventListener("click", function () {
           $("imp-box").classList.add("x-hidden");
@@ -774,21 +862,21 @@
         function doImport(text) {
           var res;
           try { res = merge(parseList(text)); }
-          catch (e) { $("imp-msg").textContent = "无法识别：请粘贴或选择本页导出的 JSON 记录。"; return; }
+          catch (e) { toast("无法识别：请用本页导出的 JSON 记录", "err", "io"); return; }
           persist();
-          $("imp-msg").textContent = "已合并 " + res.added + " 局，跳过重复 " + res.dup + " 局" + (res.bad ? "，忽略无效 " + res.bad + " 条" : "") + "。当前共 " + S.log.length + " 局。";
+          toast("已合并 " + res.added + " 局，跳过重复 " + res.dup + " 局" + (res.bad ? "，忽略无效 " + res.bad + " 条" : "") + "，共 " + S.log.length + " 局", "", "io");
         }
         $("imp-file").addEventListener("change", function () {
           var f = this.files && this.files[0];
           if (!f) return;
           var rd = new FileReader();
           rd.onload = function () { $("imp-text").value = String(rd.result || ""); doImport(String(rd.result || "")); };
-          rd.onerror = function () { $("imp-msg").textContent = "读取文件失败，请改用粘贴。"; };
+          rd.onerror = function () { toast("读取文件失败，请改用粘贴", "err", "io"); };
           rd.readAsText(f);
         });
         $("imp-go").addEventListener("click", function () {
           var t = $("imp-text").value.trim();
-          if (!t) { $("imp-msg").textContent = "请先选择文件或粘贴 JSON。"; return; }
+          if (!t) { toast("请先选择文件或粘贴 JSON", "", "io"); return; }
           doImport(t);
         });
 
@@ -806,7 +894,7 @@
             return ok ? P : null;
           } catch (e) { return null; }
         }
-        function notice(text) { $("notice-lead").textContent = text; $("notice").classList.remove("x-hidden"); }
+        function notice(text, kind) { toast(text, kind || "", "catch", true); }
         function fetchKl(P, to) {
           var qs = "?symbol=BTCUSDT&interval=1m&startTime=" + Math.floor(P.start / 60000) * 60000 + "&endTime=" + to + "&limit=1000";
           function get(base) {
@@ -845,11 +933,11 @@
             if (!hit) return;
             S.pend = null; S.pos = P;
             var r = close(hit.kind, hit.px, hit.at, true);
-            if (r) notice("你离开期间的仓位已按币安 1 分钟K线补算：" + r.label + "，" + sign(r.pnl) + " USDT（" + fullTime(r.t) + " 出场）");
+            if (r) notice("离线补算：" + r.label.replace("（离线补算）", "") + " · " + sign(r.pnl) + " USDT · " + fullTime(r.t) + " 出场");
+            else untoast("catch");
           }).catch(function () {
             if (S.pend !== P) return;
-            notice("补算失败，稍后刷新重试");
-            $("idle").innerHTML = "<strong>有一笔离开期间的仓位待补算。</strong> 补算失败，稍后刷新重试。";
+            notice("离线仓位补算失败，稍后刷新重试", "err");
           });
         }
         (function () {
@@ -858,7 +946,7 @@
           if (Date.now() < P.end) { S.pos = P; catchUp(P); }
           else {
             S.pend = P;
-            $("idle").innerHTML = "<strong>正在补算你离开期间的仓位…</strong> 按币安 1 分钟 K 线逐根检查强平和止盈。";
+            notice("正在按 1 分钟 K 线补算离开期间的仓位…");
             catchUp(P);
           }
         })();
@@ -915,11 +1003,11 @@
           if (!store) return;
           if (syncing) { again = true; return; }
           var tok = getTok();
-          if (!tok) { ghStatus(false, "请先保存 GitHub Token"); return; }
+          if (!tok) { ghStatus(false, "未设置"); toast("请先保存 GitHub Token", "err", "gh"); return; }
           syncing = true;
           ghStatus(false, "同步中…");
-          ghAttempt(tok, false).then(function () { ghStatus(true, "已同步到 GitHub · " + fullTime(Date.now())); },
-            function (e) { ghStatus(false, e && e.msg ? e.msg : "同步失败：网络错误，请稍后重试"); })
+          ghAttempt(tok, false).then(function () { ghStatus(true, "已同步 " + hhmm(Date.now())); untoast("gh"); },
+            function (e) { ghStatus(false, "同步失败"); toast(e && e.msg ? e.msg : "同步失败：网络错误，请稍后重试", "err", "gh", true); })
             .then(function () { syncing = false; if (again) { again = false; ghSync(); } });
         }
         var GH_TREE = "https://api.github.com/repos/yanglei-985/yanglei-985.github.io/git/trees/main?recursive=1";
@@ -939,7 +1027,7 @@
               .then(function (t) {
                 var res = merge(parseList(t));
                 persist();
-                if (res.added && !syncing) ghStatus(true, "已从 GitHub 读取 " + res.added + " 局记录");
+                if (res.added && !syncing) { ghStatus(true, "已读取 " + hhmm(Date.now())); toast("已从 GitHub 读取 " + res.added + " 局记录", "", "ghread"); }
               }).catch(function () {});
           });
         }
@@ -948,7 +1036,7 @@
           try { pref = localStorage.getItem(AKEY); } catch (e) {}
           $("gh-auto").checked = pref ? pref === "1" : hasTok;
           if (hasTok) $("gh-token").placeholder = "已保存（不显示）";
-          ghStatus(hasTok, hasTok ? "Token 已保存" : "未设置 Token");
+          ghStatus(hasTok, hasTok ? "已设置" : "未设置");
         } else {
           $("gh-write").classList.add("x-hidden");
           $("gh-off").classList.remove("x-hidden");
@@ -956,18 +1044,18 @@
         }
         $("gh-save").addEventListener("click", function () {
           var inp = $("gh-token"), v = inp.value.trim();
-          if (!v) { ghStatus(false, "请先粘贴 Token"); return; }
+          if (!v) { toast("请先粘贴 Token", "err", "gh"); return; }
           try {
             localStorage.setItem(TKEY, v);
             if (localStorage.getItem(AKEY) == null) { localStorage.setItem(AKEY, "1"); $("gh-auto").checked = true; }
-          } catch (e) { ghStatus(false, "保存 Token 失败"); return; }
+          } catch (e) { toast("保存 Token 失败", "err", "gh"); return; }
           inp.value = ""; inp.placeholder = "已保存（不显示）";
-          ghStatus(true, "Token 已保存");
+          ghStatus(true, "已设置"); toast("Token 已保存", "", "gh");
         });
         $("gh-clear").addEventListener("click", function () {
           try { localStorage.removeItem(TKEY); } catch (e) {}
           $("gh-token").value = ""; $("gh-token").placeholder = "";
-          ghStatus(false, "Token 已清除");
+          ghStatus(false, "未设置"); toast("Token 已清除", "", "gh");
         });
         $("gh-sync").addEventListener("click", ghSync);
         $("gh-auto").addEventListener("change", function () { try { localStorage.setItem(AKEY, this.checked ? "1" : "0"); } catch (e) {} });
