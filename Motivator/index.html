@@ -1,0 +1,998 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Motivator · BTC 高杠杆十分钟模拟器</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400&display=swap"
+    />
+    <link rel="stylesheet" href="hark.css" />
+    <link rel="stylesheet" href="hark-hero.css" />
+    <link rel="stylesheet" href="hark-charts.css" />
+    <link rel="stylesheet" href="hark-shop.css" />
+    <style>
+      :root {
+        --x-up: color-mix(in srgb, var(--fill-system-green) 72%, var(--text-primary));
+        --x-down: color-mix(in srgb, var(--fill-system-red) 80%, var(--text-primary));
+      }
+      .x-up { color: var(--x-up); }
+      .x-down { color: var(--x-down); }
+      .x-sim { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr); gap: 16px; scroll-margin-top: 80px; }
+      .x-panel { background: var(--fill-tertiary); border-radius: var(--r-l); padding: 20px; min-width: 0; display: grid; gap: 16px; align-content: start; }
+      .x-panel--wide { grid-column: 1 / -1; }
+      .x-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+      .x-label { font: var(--type-tag); color: var(--text-secondary); }
+      .x-live { display: inline-flex; align-items: center; gap: 8px; font: var(--type-label); }
+      .x-live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--fill-system-red); }
+      .x-live[data-ok="1"]::before { background: var(--fill-system-green); }
+      .x-price { font: var(--type-display); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+      .x-price small { font: var(--type-small); color: var(--text-secondary); margin-left: 6px; }
+      .x-panel .chart { margin: 0; }
+      .x-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .x-field { display: grid; gap: 6px; min-width: 0; }
+      .x-field--full { grid-column: 1 / -1; }
+      .x-input { position: relative; }
+      .x-input input {
+        width: 100%; min-height: 40px; padding: 0 56px 0 12px;
+        border: 1px solid var(--stroke-primary); border-radius: var(--r-s);
+        background: var(--fill-primary-on); color: var(--text-primary);
+        font: var(--type-body); font-variant-numeric: tabular-nums;
+      }
+      .x-input span { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font: var(--type-caption); color: var(--text-secondary); pointer-events: none; }
+      .x-seg { display: flex; flex-wrap: wrap; gap: 2px; padding: 3px; border: 1px solid var(--stroke-primary); border-radius: var(--r-s); background: var(--fill-primary-on); }
+      .x-seg button {
+        flex: 1 1 0; min-width: 40px; min-height: 34px; padding: 0 6px; border: 0; border-radius: 9px;
+        background: transparent; color: var(--text-secondary); font: var(--type-label); font-variant-numeric: tabular-nums; cursor: pointer;
+      }
+      .x-seg button:hover { background: var(--hover-wash); }
+      .x-seg button[aria-pressed="true"] { background: var(--fill-primary); color: var(--text-primary-on); }
+      .x-seg button:disabled, .x-input input:disabled { cursor: not-allowed; opacity: 0.55; }
+      .x-go { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .x-go button {
+        min-height: 64px; border: 0; border-radius: var(--r-m); color: var(--hero-text);
+        font: var(--weight-bold) 24px/1 var(--sans); cursor: pointer;
+        transition: box-shadow var(--dur-quick) ease, transform var(--dur-quick) ease;
+      }
+      .x-go button:hover { box-shadow: inset 0 0 0 100px rgb(0 0 0 / 0.08); }
+      .x-go button:active { transform: scale(0.98); }
+      .x-go button:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+      .x-long { background: #00804e; }
+      @media (pointer: coarse), (max-width: 599px) { .x-seg button { min-height: var(--tap); } }
+      .x-short { background: var(--fill-system-red); }
+      button.btn { cursor: pointer; }
+      button.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+      .x-coin { display: flex; }
+      .x-coin .btn { flex: 1; justify-content: center; min-height: var(--tap); }
+      .x-kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px 20px; }
+      .x-kv > div { display: grid; gap: 2px; min-width: 0; }
+      .x-kv b { font: var(--type-heading); font-variant-numeric: tabular-nums; }
+      .x-big { font: var(--type-figure); font-variant-numeric: tabular-nums; }
+      .x-big small { font: var(--type-label); margin-left: 6px; }
+      .x-bar { position: relative; height: 10px; border-radius: var(--r-pill); margin: 10px 0 4px;
+        background: linear-gradient(to right, color-mix(in srgb, var(--fill-system-red) 45%, transparent), var(--fill-primary-on) 50%, color-mix(in srgb, var(--fill-system-green) 45%, transparent)); }
+      .x-bar__entry { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--text-secondary); }
+      .x-bar__now { position: absolute; top: 50%; width: 18px; height: 18px; margin-left: -9px; transform: translateY(-50%); border-radius: 50%; background: var(--fill-primary); border: 3px solid var(--fill-tertiary); transition: left 200ms var(--ease-out); }
+      .x-bar-legend { display: flex; justify-content: space-between; gap: 8px; font: var(--type-caption); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+      .x-idle { font: var(--type-body); color: var(--text-secondary); }
+      .x-idle strong { color: var(--text-primary); }
+      .x-countdown { font: var(--type-figure); font-variant-numeric: tabular-nums; }
+      .x-hidden { display: none !important; }
+      .x-store { margin-top: 16px; }
+      .x-store textarea {
+        width: 100%; min-height: 140px; padding: 10px 12px; resize: vertical;
+        border: 1px solid var(--stroke-primary); border-radius: var(--r-s);
+        background: var(--fill-primary-on); color: var(--text-primary);
+        font: var(--type-caption); font-family: "Geist Mono", ui-monospace, monospace;
+      }
+      .x-store input[type="file"] { font: var(--type-small); color: var(--text-secondary); max-width: 100%; min-height: var(--tap); }
+      .x-store .links { margin: 0; }
+      .x-msg { font: var(--type-small); color: var(--text-secondary); }
+      .x-input input.x-plain { padding-right: 12px; font-variant-numeric: normal; }
+      .x-check { display: inline-flex; align-items: center; gap: 8px; min-height: var(--tap); font: var(--type-label); cursor: pointer; }
+      .x-check input { width: 18px; height: 18px; margin: 0; accent-color: var(--fill-primary); }
+      @media (max-width: 899px) { .x-sim { grid-template-columns: minmax(0, 1fr); } }
+      @media (max-width: 420px) { .x-fields { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <div class="page" id="top">
+      <header class="nav glass" data-auto></header>
+      <main class="main">
+        <header class="shop-title">
+          <h1>Motivator · BTC 高杠杆十分钟模拟器</h1>
+          <p class="shop-title__intro">用币安实时价格，模拟 10 美金、高杠杆、10 分钟定胜负。纯模拟，不涉及真钱。</p>
+        </header>
+
+        <aside class="callout x-hidden" id="notice" aria-label="离线补算" aria-live="polite">
+          <p class="callout__head">离线补算</p>
+          <p class="callout__lead" id="notice-lead"></p>
+        </aside>
+
+        <section class="x-sim" id="sim" data-nav="模拟器" aria-label="模拟器">
+          <div class="x-panel">
+            <div class="x-row">
+              <span class="x-label">BTCUSDT</span>
+              <span class="x-live" id="src" data-ok="0">连接中…</span>
+            </div>
+            <div class="x-price" id="price" aria-live="off">—</div>
+            <figure class="chart">
+              <figcaption class="chart__cap">最近 15 分钟价格<small>开始用 1 分钟 K 线收盘价补齐，之后每秒采样一次，USDT</small></figcaption>
+              <div class="chart__canvas"><canvas id="px-chart" role="img" aria-label="BTCUSDT 最近 15 分钟价格走势"></canvas></div>
+            </figure>
+          </div>
+
+          <div class="x-panel" id="controls">
+            <div class="x-fields">
+              <label class="x-field">
+                <span class="x-label">本金</span>
+                <span class="x-input"><input id="margin" type="number" min="1" step="1" value="10" inputmode="decimal" /><span>USDT</span></span>
+              </label>
+              <label class="x-field">
+                <span class="x-label">止盈（占本金）</span>
+                <span class="x-input"><input id="tp" type="number" min="1" step="10" value="100" inputmode="decimal" /><span>%</span></span>
+              </label>
+              <div class="x-field x-field--full">
+                <span class="x-label">杠杆</span>
+                <div class="x-seg" id="lev" role="group" aria-label="杠杆">
+                  <button type="button" data-v="10">10×</button><button type="button" data-v="20">20×</button><button type="button" data-v="50" aria-pressed="true">50×</button><button type="button" data-v="75">75×</button><button type="button" data-v="100">100×</button><button type="button" data-v="125">125×</button>
+                </div>
+              </div>
+              <div class="x-field">
+                <span class="x-label">时限</span>
+                <div class="x-seg" id="mins" role="group" aria-label="时限">
+                  <button type="button" data-v="1">1 分</button><button type="button" data-v="5">5 分</button><button type="button" data-v="10" aria-pressed="true">10 分</button><button type="button" data-v="30">30 分</button>
+                </div>
+              </div>
+              <div class="x-field">
+                <span class="x-label">模式</span>
+                <div class="x-seg" id="mode" role="group" aria-label="模式">
+                  <button type="button" data-v="real" aria-pressed="true">真实</button><button type="button" data-v="ideal">理想</button>
+                </div>
+              </div>
+            </div>
+            <p class="fineprint" id="preview">—</p>
+            <div class="x-go">
+              <button type="button" class="x-long" id="go-long">做多</button>
+              <button type="button" class="x-short" id="go-short">做空</button>
+            </div>
+            <div class="x-coin"><button type="button" class="btn" id="go-coin">随机方向（抛硬币）</button></div>
+          </div>
+
+          <div class="x-panel x-panel--wide" id="position" aria-live="polite">
+            <div id="idle" class="x-idle"><strong>当前空仓。</strong> 选好参数，点做多、做空或抛硬币开一局。</div>
+            <div id="live" class="x-hidden">
+              <div class="x-row">
+                <p><span class="chip chip--solid" id="p-tag">持仓中</span> <span class="x-label" id="p-desc"></span></p>
+                <div><span class="x-label">剩余 </span><span class="x-countdown" id="p-left">10:00</span></div>
+              </div>
+              <div class="x-kv" style="margin-top: 16px">
+                <div><span class="x-label">未实现盈亏（扣费后）</span><span class="x-big" id="p-pnl">—</span></div>
+                <div><span class="x-label">入场价</span><b id="p-entry">—</b></div>
+                <div><span class="x-label">当前价</span><b id="p-now">—</b></div>
+                <div><span class="x-label">强平价</span><b id="p-liq">—</b></div>
+                <div><span class="x-label">止盈价</span><b id="p-tp">—</b></div>
+              </div>
+              <div class="x-bar" aria-hidden="true"><span class="x-bar__entry" id="bar-entry"></span><span class="x-bar__now" id="bar-now"></span></div>
+              <div class="x-bar-legend"><span id="bar-l">强平</span><span id="bar-r">止盈</span></div>
+              <div class="links" style="margin-top: 16px"><button type="button" class="btn" id="close">手动平仓</button></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="log" data-nav="记录">
+          <div class="head">
+            <h2>本次的模拟战绩</h2>
+            <p class="head__sub">能自动保存就自动保存；不能时用下方的导出/导入长期留存。</p>
+          </div>
+          <section class="stats" aria-label="战绩汇总">
+            <div class="stat"><span class="stat__fig" id="s-n">0</span><span class="stat__label">总局数</span></div>
+            <div class="stat"><span class="stat__fig" id="s-win">—</span><span class="stat__label">胜率</span></div>
+            <div class="stat"><span class="stat__fig" id="s-tp">0</span><span class="stat__label">翻倍次数</span></div>
+            <div class="stat"><span class="stat__fig" id="s-liq">0</span><span class="stat__label">爆仓次数</span></div>
+            <div class="stat"><span class="stat__fig" id="s-pnl">0.00</span><span class="stat__label">累计盈亏 USDT</span></div>
+            <div class="stat"><span class="stat__fig" id="s-fee">0.00</span><span class="stat__label">手续费合计 USDT</span></div>
+          </section>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">时间</th>
+                  <th scope="col">方向</th>
+                  <th scope="col">杠杆</th>
+                  <th scope="col">入场</th>
+                  <th scope="col">出场</th>
+                  <th scope="col">结果</th>
+                  <th scope="col">盈亏 USDT</th>
+                </tr>
+              </thead>
+              <tbody id="rows">
+                <tr id="empty"><td class="muted" colspan="8">还没有对局。</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="links"><button type="button" class="btn" id="reset">重置</button></div>
+
+          <div class="x-panel x-store" id="store" aria-label="保存与恢复记录">
+            <div class="x-row">
+              <span class="x-label">保存与恢复</span>
+              <span class="x-live" id="save-status" data-ok="0">检测中…</span>
+            </div>
+            <div class="links">
+              <button type="button" class="btn" id="exp-json">导出记录</button>
+              <button type="button" class="btn" id="exp-csv">导出 CSV</button>
+              <button type="button" class="btn" id="imp-open">导入记录</button>
+            </div>
+
+            <div id="exp-box" class="x-hidden" style="display: grid; gap: 10px">
+              <label class="x-field">
+                <span class="x-label" id="exp-title">导出内容</span>
+                <textarea id="exp-text" readonly spellcheck="false"></textarea>
+              </label>
+              <div class="links">
+                <button type="button" class="btn" id="exp-copy">复制</button>
+                <button type="button" class="btn" id="exp-dl">下载文件</button>
+              </div>
+              <p class="x-msg" id="exp-msg" aria-live="polite"></p>
+            </div>
+
+            <div id="imp-box" class="x-hidden" style="display: grid; gap: 10px">
+              <label class="x-field">
+                <span class="x-label">选择 .json 文件</span>
+                <input type="file" id="imp-file" accept=".json,application/json" />
+              </label>
+              <label class="x-field">
+                <span class="x-label">或粘贴导出的 JSON</span>
+                <textarea id="imp-text" spellcheck="false" placeholder='{"rounds": [ ... ]}'></textarea>
+              </label>
+              <div class="links">
+                <button type="button" class="btn" id="imp-go">合并导入</button>
+                <button type="button" class="btn" id="imp-cancel">取消</button>
+              </div>
+              <p class="x-msg" id="imp-msg" aria-live="polite"></p>
+            </div>
+            <p class="fineprint">导入会与当前记录合并，按每局结束时间去重，再重新计算战绩。</p>
+          </div>
+
+          <div class="x-panel x-store" id="gh" aria-label="GitHub 同步">
+            <div class="x-row">
+              <span class="x-label">GitHub 同步</span>
+              <span class="x-live" id="gh-status" data-ok="0" aria-live="polite">检测中…</span>
+            </div>
+            <p class="x-msg x-hidden" id="gh-off">在 <a class="link" href="https://yanglei-985.github.io/Motivator/" target="_blank" rel="noopener">https://yanglei-985.github.io/Motivator/</a> 打开才能同步到 GitHub</p>
+            <div id="gh-write" style="display: grid; gap: 12px">
+              <label class="x-field">
+                <span class="x-label">GitHub Token（只存在你这台设备的浏览器里）</span>
+                <span class="x-input"><input id="gh-token" class="x-plain" type="password" autocomplete="off" spellcheck="false" /></span>
+              </label>
+              <p class="fineprint">在 GitHub → Settings → Developer settings → Fine-grained tokens 新建一个 Token，仓库只选 yanglei-985.github.io，权限 Contents: Read and write。</p>
+              <div class="links">
+                <button type="button" class="btn" id="gh-save">保存</button>
+                <button type="button" class="btn" id="gh-clear">清除Token</button>
+                <button type="button" class="btn" id="gh-sync">立即同步</button>
+              </div>
+              <label class="x-check"><input type="checkbox" id="gh-auto" /> 每局结束后自动同步</label>
+            </div>
+            <p class="fineprint">记录存放在 yanglei-985.github.io 仓库的 Motivator/records.json；打开页面时自动公开读取并合并，无需 Token。</p>
+          </div>
+        </section>
+
+        <section class="section" id="backtest" data-nav="回测">
+          <div class="head">
+            <h2>一年回测：十分钟里，BTC 很少走远</h2>
+          </div>
+          <div class="prose">
+            <p>用币安 BTCUSDT 永续合约 2025年11月至2026年10月共 525,600 根 1 分钟 K 线，随机时间、随机方向，各开 4 万次 10 分钟仓位的结果。</p>
+          </div>
+          <section class="stats" aria-label="10 分钟内最大波动">
+            <div class="stat"><span class="stat__fig">34.5%</span><span class="stat__label">最大波动 ≥0.2%</span></div>
+            <div class="stat"><span class="stat__fig">5.6%</span><span class="stat__label">≥0.5%</span></div>
+            <div class="stat"><span class="stat__fig">1.5%</span><span class="stat__label">≥0.8%</span></div>
+            <div class="stat"><span class="stat__fig">0.73%</span><span class="stat__label">≥1%</span></div>
+            <div class="stat"><span class="stat__fig">0.05%</span><span class="stat__label">≥2%</span></div>
+          </section>
+          <p class="fineprint">占全部 10 分钟窗口的比例。10 分钟收盘涨跌中位数仅 0.08%。</p>
+          <div class="table-wrap">
+            <table>
+              <caption>每组 4 万次 10 分钟仓位，止盈为本金 100%</caption>
+              <thead>
+                <tr>
+                  <th scope="col">设置</th>
+                  <th scope="col">爆仓</th>
+                  <th scope="col">翻倍</th>
+                  <th scope="col">到时平仓</th>
+                  <th scope="col">胜率</th>
+                  <th scope="col">平均每局</th>
+                  <th scope="col">说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">50 倍 <small>真实</small></th>
+                  <td class="num">约 0.1%</td>
+                  <td class="num">几乎为 0</td>
+                  <td class="num">几乎全部</td>
+                  <td class="num">约 21%</td>
+                  <td class="num">−5%</td>
+                  <td class="muted">亏损主要是手续费：0.05%×2×50 = 5%</td>
+                </tr>
+                <tr class="is-highlight">
+                  <th scope="row">125 倍 <small>真实</small></th>
+                  <td class="num">4.9%</td>
+                  <td class="num">1.3%</td>
+                  <td class="num">约 94%</td>
+                  <td class="num">约 21%</td>
+                  <td class="num">约 −14%</td>
+                  <td class="muted">反向约 0.4% 即强平，正向 0.8% 才翻倍</td>
+                </tr>
+                <tr>
+                  <th scope="row">各杠杆 <small>理想，无手续费</small></th>
+                  <td class="muted">—</td>
+                  <td class="muted">—</td>
+                  <td class="muted">—</td>
+                  <td class="num">约 50%</td>
+                  <td class="num">≈ 0</td>
+                  <td class="muted">就是抛硬币</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <aside class="callout" aria-label="结论">
+            <p class="callout__head">结论</p>
+            <p class="callout__lead"><strong>BTC 在 10 分钟内很少走出 2%，想“十分钟定胜负”只能把杠杆拉满，</strong>而杠杆越高，手续费和强平线对你越不利。</p>
+          </aside>
+        </section>
+      </main>
+      <footer class="foot">
+        <p>数据来源：币安公开行情接口（data.binance.vision / fstream.binance.com）。本页面仅为模拟和教育用途，不构成投资建议。</p>
+        <nav aria-label="返回各部分" data-auto></nav>
+        <a class="badge" href="https://hark.com/" target="_blank" rel="noopener"><span class="hark-mark"></span><span>built by hark</span></a>
+      </footer>
+    </div>
+    <script src="hark.js"></script>
+    <script src="chart.js"></script>
+    <script src="datalabels.js"></script>
+    <script src="hark-charts.js"></script>
+    <script>
+      (function () {
+        var $ = function (id) { return document.getElementById(id); };
+        var FUT = "wss://fstream.binance.com/ws/btcusdt@aggTrade";
+        var SPOT = "wss://data-stream.binance.vision/ws/btcusdt@aggTrade";
+        var POLL = "https://data-api.binance.vision/api/v3/ticker/price?symbol=BTCUSDT";
+        var KLINES = "https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=15";
+        var WIN = 15 * 60 * 1000;
+        var S = { price: null, last: 0, source: "", hist: [], pos: null, log: [], lev: 50, mins: 10, mode: "real", n: 0 };
+
+        function fmtP(v) { return v.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }
+        function sign(v, d) { d = d == null ? 2 : d; var a = Math.abs(v).toFixed(d); return (Number(a) === 0 ? "" : v > 0 ? "+" : "−") + a; }
+        function cls(v) { return v > 0.0049 ? "x-up" : v < -0.0049 ? "x-down" : ""; }
+        function pad(n) { return (n < 10 ? "0" : "") + n; }
+        function hhmm(t) { var d = new Date(t); return pad(d.getHours()) + ":" + pad(d.getMinutes()); }
+        function hhmmss(t) { var d = new Date(t); return hhmm(t) + ":" + pad(d.getSeconds()); }
+
+        /* ---------- price feed ---------- */
+        var ws = null, pollT = null, gen = 0;
+        function stopAll() {
+          gen++;
+          if (ws) { try { ws.onclose = ws.onerror = ws.onmessage = null; ws.close(); } catch (e) {} ws = null; }
+          if (pollT) { clearInterval(pollT); pollT = null; }
+        }
+        function onPrice(p, src) {
+          if (!isFinite(p) || p <= 0) return;
+          S.price = p; S.last = Date.now();
+          if (S.source !== src) { S.source = src; renderSrc(); }
+          check();
+          schedule();
+        }
+        function tryWs(url, src, next) {
+          var my = ++gen, got = false, done = false, sock, t;
+          function fail() {
+            if (done || my !== gen) return;
+            done = true; clearTimeout(t);
+            try { sock.close(); } catch (e) {}
+            if (!got) next(); else setTimeout(start, 2000);
+          }
+          try { sock = new WebSocket(url); } catch (e) { next(); return; }
+          ws = sock;
+          t = setTimeout(function () { if (!got) fail(); }, 5000);
+          sock.onmessage = function (e) {
+            if (my !== gen) return;
+            got = true; clearTimeout(t);
+            try { onPrice(parseFloat(JSON.parse(e.data).p), src); } catch (_) {}
+          };
+          sock.onerror = fail;
+          sock.onclose = fail;
+        }
+        function pollOnce() {
+          fetch(POLL).then(function (r) { return r.json(); }).then(function (d) { onPrice(parseFloat(d.price), "轮询"); }).catch(function () {});
+        }
+        function poll() {
+          gen++;
+          S.source = "轮询"; renderSrc();
+          pollOnce(); pollT = setInterval(pollOnce, 1000);
+        }
+        function start() {
+          stopAll();
+          S.source = ""; renderSrc();
+          tryWs(FUT, "合约实时", function () { tryWs(SPOT, "现货实时", poll); });
+        }
+        function renderSrc() {
+          var el = $("src");
+          el.textContent = S.source ? S.source : "连接中…";
+          el.setAttribute("data-ok", S.last && Date.now() - S.last < 5000 ? "1" : "0");
+        }
+
+        /* ---------- chart ---------- */
+        var chart = new Chart($("px-chart"), {
+          type: "line",
+          data: {
+            datasets: [
+              { label: "BTCUSDT", data: S.hist },
+              { label: "", data: [], borderColor: "var(--chart-reference)", borderDash: [3, 4], borderWidth: 1, pointRadius: 0 },
+            ],
+          },
+          options: {
+            animation: false,
+            scales: {
+              x: { type: "linear", ticks: { callback: function (v) { return hhmm(v); }, maxTicksLimit: 6 } },
+              y: { ticks: { callback: function (v) { return v.toLocaleString("en-US"); } } },
+            },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                filter: function (i) { return i.datasetIndex === 0; },
+                callbacks: {
+                  title: function (items) { return items.length ? hhmmss(items[0].parsed.x) : ""; },
+                  label: function (c) { return "$" + fmtP(c.parsed.y); },
+                },
+              },
+            },
+          },
+        });
+        function drawChart() {
+          var now = Date.now();
+          chart.options.scales.x.min = now - WIN;
+          chart.options.scales.x.max = now;
+          var ref = chart.data.datasets[1];
+          if (S.pos) { ref.label = "入场 " + fmtP(S.pos.e); ref.data = [{ x: now - WIN, y: S.pos.e }, { x: now, y: S.pos.e }]; }
+          else { ref.label = ""; ref.data = []; }
+          chart.update("none");
+        }
+        fetch(KLINES).then(function (r) { return r.json(); }).then(function (rows) {
+          if (!Array.isArray(rows)) return;
+          var pts = rows.map(function (k) { return { x: k[0] + 60000, y: parseFloat(k[4]) }; }).filter(function (p) { return isFinite(p.y); });
+          if (!pts.length) return;
+          var lastX = pts[pts.length - 1].x;
+          var live = S.hist.filter(function (h) { return h.x > lastX; });
+          S.hist.length = 0;
+          Array.prototype.push.apply(S.hist, pts.concat(live));
+          if (S.price == null) { S.price = pts[pts.length - 1].y; schedule(); }
+          drawChart();
+        }).catch(function () {});
+
+        /* ---------- controls ---------- */
+        function seg(id, key, num) {
+          var box = $(id);
+          box.addEventListener("click", function (e) {
+            var b = e.target.closest("button");
+            if (!b || b.disabled) return;
+            box.querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+            S[key] = num ? Number(b.dataset.v) : b.dataset.v;
+            renderPreview();
+          });
+        }
+        seg("lev", "lev", true); seg("mins", "mins", true); seg("mode", "mode", false);
+        $("margin").addEventListener("input", renderPreview);
+        $("tp").addEventListener("input", renderPreview);
+
+        function params() {
+          var m = parseFloat($("margin").value), tp = parseFloat($("tp").value), L = S.lev, real = S.mode === "real";
+          var fee = real ? 0.0005 : 0, mmr = real ? 0.004 : 0;
+          return { m: m, tp: tp, L: L, real: real, fee: fee, mmr: mmr, mins: S.mins, ok: m > 0 && tp > 0 };
+        }
+        function renderPreview() {
+          var p = params();
+          if (!p.ok) { $("preview").textContent = "本金和止盈需大于 0。"; return; }
+          var N = p.m * p.L, openFee = N * p.fee, buf = p.m - openFee - N * p.mmr;
+          var liqMove = (buf / N) * 100, tpMove = p.tp / p.L;
+          $("preview").textContent =
+            "名义仓位 " + N.toLocaleString("en-US", { maximumFractionDigits: 2 }) + " USDT · 反向 " + liqMove.toFixed(2) + "% 强平 · 正向 " + tpMove.toFixed(2) + "% 止盈 · " +
+            (p.real ? "双边手续费约 " + (2 * N * p.fee).toFixed(2) + " USDT（本金的 " + (100 * N * p.fee * 2 / p.m).toFixed(1) + "%）" : "无手续费、无维持保证金");
+        }
+
+        function lock(on) {
+          document.querySelectorAll("#controls button, #controls input").forEach(function (el) { el.disabled = on; });
+          $("close").disabled = !on;
+        }
+
+        /* ---------- positions ---------- */
+        function open(dir, coin) {
+          if (S.pos || S.pend) return;
+          if (S.price == null || !S.last) {
+            $("idle").innerHTML = "<strong>还没收到实时价格。</strong> 正在连接币安行情（" + (S.source || "连接中") + "），收到价格后再点一次即可开仓。";
+            return;
+          }
+          var p = params();
+          if (!p.ok) { renderPreview(); return; }
+          var e = S.price, N = p.m * p.L, qty = N / e, openFee = N * p.fee, buf = p.m - openFee - N * p.mmr;
+          var now = Date.now();
+          S.pos = {
+            dir: dir, coin: !!coin, m: p.m, L: p.L, real: p.real, fee: p.fee, e: e, N: N, qty: qty, openFee: openFee,
+            liq: e - (dir * Math.max(buf, 0)) / qty, tpP: e * (1 + (dir * p.tp) / 100 / p.L), tp: p.tp,
+            start: now, end: now + p.mins * 60000, mins: p.mins,
+          };
+          lock(true);
+          savePos();
+          if (buf <= 0) { close("liq", e); return; }
+          render(); drawChart();
+        }
+        function check() {
+          var P = S.pos;
+          if (!P || S.price == null) return;
+          var px = S.price;
+          if (P.dir > 0 ? px >= P.tpP : px <= P.tpP) return close("tp", P.tpP);
+          if (P.dir > 0 ? px <= P.liq : px >= P.liq) return close("liq", P.liq);
+        }
+        var KIND = { liq: "爆仓", time: "到时平仓", manual: "手动平仓" };
+        function close(kind, px, at, off) {
+          var P = S.pos;
+          if (!P) return;
+          S.pos = null;
+          dropPos();
+          var pnl, fees;
+          if (kind === "liq") { pnl = -P.m; fees = P.openFee; }
+          else {
+            var closeFee = P.qty * px * P.fee;
+            pnl = P.dir * P.qty * (px - P.e) - P.openFee - closeFee;
+            fees = P.openFee + closeFee;
+          }
+          var label = (kind === "tp" ? (P.tp === 100 ? "止盈翻倍" : "止盈 +" + P.tp + "%") : KIND[kind]) + (off ? "（离线补算）" : "");
+          S.n++;
+          var r = { i: S.n, t: at || Date.now(), dir: P.dir, coin: P.coin, L: P.L, real: P.real, e: P.e, x: px, kind: kind, label: label, pnl: pnl, fees: fees, m: P.m };
+          S.log.push(r);
+          if (off) rebuild(); else { addRow(r); renderStats(); }
+          persist();
+          lock(false);
+          $("idle").innerHTML = "<strong>上一局 #" + r.i + "：" + esc(label) + "，" + sign(pnl) + " USDT（" + sign((pnl / P.m) * 100, 1) + "%）。</strong> 再来一局？";
+          render(); drawChart();
+          if (ghAuto()) ghSync();
+          return r;
+        }
+
+        function td(label, html, c) { return '<td data-label="' + label + '"' + (c ? ' class="' + c + '"' : "") + ">" + html + "</td>"; }
+        function addRow(r) {
+          var empty = $("empty");
+          if (empty) empty.remove();
+          var tr = document.createElement("tr");
+          tr.innerHTML =
+            '<th scope="row">' + r.i + "</th>" +
+            td("时间", hhmmss(r.t)) +
+            td("方向", (r.dir > 0 ? "做多" : "做空") + (r.coin ? "<small>抛硬币</small>" : "")) +
+            td("杠杆", r.L + "×<small>" + (r.real ? "真实" : "理想") + "</small>") +
+            td("入场", fmtP(r.e)) +
+            td("出场", fmtP(r.x)) +
+            td("结果", esc(r.label)) +
+            td("盈亏 USDT", '<span class="' + cls(r.pnl) + '">' + sign(r.pnl) + "</span>", "num");
+          $("rows").prepend(tr);
+        }
+        function renderStats() {
+          var L = S.log, n = L.length;
+          var wins = L.filter(function (r) { return r.pnl > 0; }).length;
+          var pnl = L.reduce(function (a, r) { return a + r.pnl; }, 0);
+          var fees = L.reduce(function (a, r) { return a + r.fees; }, 0);
+          $("s-n").textContent = n;
+          $("s-win").textContent = n ? ((wins / n) * 100).toFixed(0) + "%" : "—";
+          $("s-tp").textContent = L.filter(function (r) { return r.kind === "tp"; }).length;
+          $("s-liq").textContent = L.filter(function (r) { return r.kind === "liq"; }).length;
+          $("s-pnl").textContent = sign(pnl);
+          $("s-pnl").className = "stat__fig " + cls(pnl);
+          $("s-fee").textContent = fees.toFixed(2);
+        }
+
+        /* ---------- render ---------- */
+        var raf = 0;
+        function schedule() { if (!raf) raf = requestAnimationFrame(function () { raf = 0; render(); }); }
+        function render() {
+          if (S.price != null) $("price").innerHTML = "$" + fmtP(S.price) + "<small>USDT</small>";
+          var P = S.pos;
+          $("idle").classList.toggle("x-hidden", !!P);
+          $("live").classList.toggle("x-hidden", !P);
+          if (!P) return;
+          var px = S.price != null ? S.price : P.e;
+          var gross = P.dir * P.qty * (px - P.e);
+          var net = gross - P.openFee - P.qty * px * P.fee;
+          $("p-desc").textContent = (P.dir > 0 ? "做多" : "做空") + (P.coin ? "（抛硬币）" : "") + " · " + P.L + "× · " + (P.real ? "真实" : "理想") + " · 本金 " + P.m + " USDT · 时限 " + P.mins + " 分钟";
+          var pe = $("p-pnl");
+          pe.innerHTML = sign(net) + " USDT<small>" + sign((net / P.m) * 100, 1) + "%</small>";
+          pe.className = "x-big " + cls(net);
+          $("p-entry").textContent = fmtP(P.e);
+          $("p-now").textContent = fmtP(px);
+          $("p-liq").textContent = fmtP(P.liq);
+          $("p-tp").textContent = fmtP(P.tpP);
+          var left = Math.max(0, P.end - Date.now()), s = Math.ceil(left / 1000);
+          $("p-left").textContent = pad(Math.floor(s / 60)) + ":" + pad(s % 60);
+          var span = P.tpP - P.liq;
+          var f = function (v) { return Math.max(0, Math.min(1, (v - P.liq) / span)) * 100 + "%"; };
+          $("bar-now").style.left = f(px);
+          $("bar-entry").style.left = f(P.e);
+          $("bar-l").textContent = "强平 " + fmtP(P.liq);
+          $("bar-r").textContent = "止盈 " + fmtP(P.tpP);
+        }
+
+        /* ---------- buttons ---------- */
+        $("go-long").addEventListener("click", function () { open(1); });
+        $("go-short").addEventListener("click", function () { open(-1); });
+        $("go-coin").addEventListener("click", function () { open(Math.random() < 0.5 ? 1 : -1, true); });
+        $("close").addEventListener("click", function () { if (S.pos && S.price != null) close("manual", S.price); });
+        $("reset").addEventListener("click", function () {
+          S.pos = null; S.pend = null; S.log = []; S.n = 0;
+          dropPos(); $("notice").classList.add("x-hidden");
+          $("rows").innerHTML = '<tr id="empty"><td class="muted" colspan="8">还没有对局。</td></tr>';
+          $("idle").innerHTML = "<strong>当前空仓。</strong> 选好参数，点做多、做空或抛硬币开一局。";
+          lock(false); renderStats(); persist(); render(); drawChart();
+        });
+
+        /* ---------- save / restore ---------- */
+        var KEY = "btc-sim-records-v1", store = false;
+        function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+        function setStatus(ok, text) { var el = $("save-status"); el.setAttribute("data-ok", ok ? "1" : "0"); el.textContent = text; }
+        function summary() {
+          var L = S.log, n = L.length, wins = L.filter(function (r) { return r.pnl > 0; }).length;
+          return {
+            rounds: n, wins: wins, winRate: n ? +(wins / n * 100).toFixed(2) : null,
+            takeProfit: L.filter(function (r) { return r.kind === "tp"; }).length,
+            liquidations: L.filter(function (r) { return r.kind === "liq"; }).length,
+            pnlUSDT: +L.reduce(function (a, r) { return a + r.pnl; }, 0).toFixed(4),
+            feesUSDT: +L.reduce(function (a, r) { return a + r.fees; }, 0).toFixed(4),
+          };
+        }
+        function persist() {
+          if (!store) return;
+          try { localStorage.setItem(KEY, JSON.stringify(S.log)); setStatus(true, "已自动保存"); }
+          catch (e) { store = false; setStatus(false, "此环境无法自动保存，请用导出/导入"); }
+        }
+        function clean(r) {
+          if (!r || typeof r !== "object") return null;
+          var t = Number(r.t), e = Number(r.e), x = Number(r.x), pnl = Number(r.pnl);
+          if (!isFinite(t) || !isFinite(e) || !isFinite(x) || !isFinite(pnl)) return null;
+          var kind = r.kind === "tp" || KIND[r.kind] ? r.kind : "manual";
+          return {
+            i: 0, t: t, dir: Number(r.dir) < 0 ? -1 : 1, coin: !!r.coin, L: Number(r.L) || 0, real: r.real !== false,
+            e: e, x: x, kind: kind, label: String(r.label || KIND[kind] || "止盈").slice(0, 40),
+            pnl: pnl, fees: Number(r.fees) || 0, m: Number(r.m) || 0,
+          };
+        }
+        function rebuild() {
+          S.log.sort(function (a, b) { return a.t - b.t; });
+          S.log.forEach(function (r, k) { r.i = k + 1; });
+          S.n = S.log.length;
+          $("rows").innerHTML = S.log.length ? "" : '<tr id="empty"><td class="muted" colspan="8">还没有对局。</td></tr>';
+          S.log.forEach(addRow);
+          renderStats();
+        }
+        function merge(list) {
+          var seen = {}, added = 0, dup = 0, bad = 0;
+          S.log.forEach(function (r) { seen[r.t] = 1; });
+          list.forEach(function (raw) {
+            var r = clean(raw);
+            if (!r) { bad++; return; }
+            if (seen[r.t]) { dup++; return; }
+            seen[r.t] = 1; S.log.push(r); added++;
+          });
+          rebuild();
+          return { added: added, dup: dup, bad: bad };
+        }
+        function parseList(text) {
+          var d = JSON.parse(text);
+          if (Array.isArray(d)) return d;
+          if (d && Array.isArray(d.rounds)) return d.rounds;
+          throw new Error("no rounds");
+        }
+
+        try {
+          var probe = "__btc_sim_probe__";
+          localStorage.setItem(probe, "1"); localStorage.removeItem(probe);
+          store = true;
+          var saved = localStorage.getItem(KEY);
+          if (saved) { try { merge(parseList(saved)); } catch (_) {} }
+          setStatus(true, "已自动保存");
+        } catch (e) {
+          store = false;
+          setStatus(false, "此环境无法自动保存，请用导出/导入");
+        }
+
+        function pad2(n) { return pad(n); }
+        function fullTime(t) { var d = new Date(t); return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()) + " " + hhmmss(t); }
+        function toJSON(withOpen) {
+          var o = { app: "BTC 高杠杆十分钟模拟器", version: 1, exportedAt: new Date().toISOString(), summary: summary(), rounds: S.log };
+          if (withOpen) o.openPosition = S.pos || S.pend || null;
+          return JSON.stringify(o, null, 2);
+        }
+        function csvCell(v) { v = String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+        function toCSV() {
+          var head = ["序号", "时间", "方向", "抛硬币", "杠杆", "模式", "本金 USDT", "入场", "出场", "结果", "盈亏 USDT", "手续费 USDT"];
+          var lines = [head.join(",")];
+          S.log.forEach(function (r) {
+            lines.push([r.i, fullTime(r.t), r.dir > 0 ? "做多" : "做空", r.coin ? "是" : "否", r.L + "×", r.real ? "真实" : "理想", r.m,
+              r.e.toFixed(1), r.x.toFixed(1), r.label, r.pnl.toFixed(4), r.fees.toFixed(4)].map(csvCell).join(","));
+          });
+          return lines.join("\n");
+        }
+        var cur = null;
+        function download() {
+          if (!cur) return;
+          try {
+            var blob = new Blob([cur.bom ? "\uFEFF" + cur.text : cur.text], { type: cur.type });
+            var url = URL.createObjectURL(blob), a = document.createElement("a");
+            a.href = url; a.download = cur.name; a.style.display = "none";
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+            $("exp-msg").textContent = "已尝试下载 " + cur.name + "。若没有弹出下载，请复制下方内容自行保存。";
+          } catch (e) {
+            $("exp-msg").textContent = "此环境无法下载文件，请复制下方内容自行保存。";
+          }
+        }
+        function showExport(kind) {
+          cur = kind === "csv"
+            ? { text: toCSV(), name: "btc-sim-records.csv", type: "text/csv;charset=utf-8", bom: true, title: "CSV（" + S.log.length + " 局）" }
+            : { text: toJSON(), name: "btc-sim-records.json", type: "application/json", bom: false, title: "JSON（" + S.log.length + " 局，含汇总）" };
+          $("imp-box").classList.add("x-hidden");
+          $("exp-box").classList.remove("x-hidden");
+          $("exp-title").textContent = cur.title;
+          $("exp-text").value = cur.text;
+          download();
+        }
+        function fallbackCopy() {
+          var ta = $("exp-text");
+          ta.focus(); ta.select(); ta.setSelectionRange(0, ta.value.length);
+          var ok = false;
+          try { ok = document.execCommand("copy"); } catch (e) {}
+          $("exp-msg").textContent = ok ? "已复制到剪贴板。" : "无法自动复制，内容已全选，请按 Ctrl/⌘ + C。";
+        }
+        $("exp-json").addEventListener("click", function () { showExport("json"); });
+        $("exp-csv").addEventListener("click", function () { showExport("csv"); });
+        $("exp-dl").addEventListener("click", download);
+        $("exp-copy").addEventListener("click", function () {
+          var text = $("exp-text").value;
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function () { $("exp-msg").textContent = "已复制到剪贴板。"; }, fallbackCopy);
+          } else fallbackCopy();
+        });
+        $("imp-open").addEventListener("click", function () {
+          $("exp-box").classList.add("x-hidden");
+          $("imp-box").classList.remove("x-hidden");
+          $("imp-msg").textContent = "";
+        });
+        $("imp-cancel").addEventListener("click", function () {
+          $("imp-box").classList.add("x-hidden");
+          $("imp-text").value = ""; $("imp-file").value = "";
+        });
+        function doImport(text) {
+          var res;
+          try { res = merge(parseList(text)); }
+          catch (e) { $("imp-msg").textContent = "无法识别：请粘贴或选择本页导出的 JSON 记录。"; return; }
+          persist();
+          $("imp-msg").textContent = "已合并 " + res.added + " 局，跳过重复 " + res.dup + " 局" + (res.bad ? "，忽略无效 " + res.bad + " 条" : "") + "。当前共 " + S.log.length + " 局。";
+        }
+        $("imp-file").addEventListener("change", function () {
+          var f = this.files && this.files[0];
+          if (!f) return;
+          var rd = new FileReader();
+          rd.onload = function () { $("imp-text").value = String(rd.result || ""); doImport(String(rd.result || "")); };
+          rd.onerror = function () { $("imp-msg").textContent = "读取文件失败，请改用粘贴。"; };
+          rd.readAsText(f);
+        });
+        $("imp-go").addEventListener("click", function () {
+          var t = $("imp-text").value.trim();
+          if (!t) { $("imp-msg").textContent = "请先选择文件或粘贴 JSON。"; return; }
+          doImport(t);
+        });
+
+        /* ---------- open position: persist + offline catch-up ---------- */
+        var POSKEY = "btc-sim-open-v1";
+        var KL_A = "https://data-api.binance.vision/api/v3/klines", KL_B = "https://fapi.binance.com/fapi/v1/klines";
+        function savePos() { if (!store || !S.pos) return; try { localStorage.setItem(POSKEY, JSON.stringify(S.pos)); } catch (e) {} }
+        function dropPos() { if (!store) return; try { localStorage.removeItem(POSKEY); } catch (e) {} }
+        function loadPos() {
+          if (!store) return null;
+          try {
+            var P = JSON.parse(localStorage.getItem(POSKEY) || "null");
+            if (!P || (P.dir !== 1 && P.dir !== -1)) return null;
+            var ok = ["m", "L", "e", "qty", "liq", "tpP", "start", "end", "fee", "openFee"].every(function (k) { return typeof P[k] === "number" && isFinite(P[k]); });
+            return ok ? P : null;
+          } catch (e) { return null; }
+        }
+        function notice(text) { $("notice-lead").textContent = text; $("notice").classList.remove("x-hidden"); }
+        function fetchKl(P, to) {
+          var qs = "?symbol=BTCUSDT&interval=1m&startTime=" + Math.floor(P.start / 60000) * 60000 + "&endTime=" + to + "&limit=1000";
+          function get(base) {
+            return fetch(base + qs, { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error("http"); return r.json(); })
+              .then(function (d) { if (!Array.isArray(d)) throw new Error("bad"); return d; });
+          }
+          return get(KL_A).catch(function () { return get(KL_B); });
+        }
+        function scan(P, rows) {
+          for (var i = 0; i < rows.length; i++) {
+            var k = rows[i], t = Number(k[0]), hi = parseFloat(k[2]), lo = parseFloat(k[3]);
+            if (!isFinite(t) || t > P.end) break;
+            var at = Math.max(t, P.start);
+            if (P.dir > 0) {
+              if (lo <= P.liq) return { kind: "liq", px: P.liq, at: at };
+              if (hi >= P.tpP) return { kind: "tp", px: P.tpP, at: at };
+            } else {
+              if (hi >= P.liq) return { kind: "liq", px: P.liq, at: at };
+              if (lo <= P.tpP) return { kind: "tp", px: P.tpP, at: at };
+            }
+          }
+          return null;
+        }
+        function catchUp(P) {
+          var now = Date.now();
+          fetchKl(P, Math.min(now, P.end)).then(function (rows) {
+            if (S.pos !== P && S.pend !== P) return;
+            var hit = scan(P, rows);
+            if (!hit && now >= P.end) {
+              var dm = Math.floor(P.end / 60000) * 60000, bar = null;
+              rows.forEach(function (k) { if (Number(k[0]) <= dm) bar = k; });
+              var cpx = bar ? parseFloat(bar[4]) : NaN;
+              if (!isFinite(cpx)) throw new Error("no bar");
+              hit = { kind: "time", px: cpx, at: P.end };
+            }
+            if (!hit) return;
+            S.pend = null; S.pos = P;
+            var r = close(hit.kind, hit.px, hit.at, true);
+            if (r) notice("你离开期间的仓位已按币安 1 分钟K线补算：" + r.label + "，" + sign(r.pnl) + " USDT（" + fullTime(r.t) + " 出场）");
+          }).catch(function () {
+            if (S.pend !== P) return;
+            notice("补算失败，稍后刷新重试");
+            $("idle").innerHTML = "<strong>有一笔离开期间的仓位待补算。</strong> 补算失败，稍后刷新重试。";
+          });
+        }
+        (function () {
+          var P = loadPos();
+          if (!P) return;
+          if (Date.now() < P.end) { S.pos = P; catchUp(P); }
+          else {
+            S.pend = P;
+            $("idle").innerHTML = "<strong>正在补算你离开期间的仓位…</strong> 按币安 1 分钟 K 线逐根检查强平和止盈。";
+            catchUp(P);
+          }
+        })();
+
+        /* ---------- GitHub sync ---------- */
+        var GH_API = "https://api.github.com/repos/yanglei-985/yanglei-985.github.io/contents/Motivator/records.json";
+        var GH_RAW = "https://raw.githubusercontent.com/yanglei-985/yanglei-985.github.io/main/Motivator/records.json";
+        var TKEY = "btc-sim-gh-token", AKEY = "btc-sim-gh-auto";
+        function getTok() { if (!store) return ""; try { return localStorage.getItem(TKEY) || ""; } catch (e) { return ""; } }
+        function ghAuto() { return store && $("gh-auto").checked && !!getTok(); }
+        function ghStatus(ok, text) { var el = $("gh-status"); el.setAttribute("data-ok", ok ? "1" : "0"); el.textContent = text; }
+        function b64(str) {
+          var bytes = new TextEncoder().encode(str), bin = "";
+          for (var i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+          return btoa(bin);
+        }
+        function unb64(s) {
+          var bin = atob(String(s).replace(/\s/g, "")), bytes = new Uint8Array(bin.length);
+          for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+          return new TextDecoder().decode(bytes);
+        }
+        function ghFail(status, d) {
+          var msg = status === 401 || status === 403 ? "Token 无效或没有该仓库的写权限"
+            : "同步失败：HTTP " + status + (d && d.message ? " · " + String(d.message).slice(0, 120) : "");
+          return { msg: msg };
+        }
+        function hdr(tok, json) {
+          var h = { Authorization: "Bearer " + tok, Accept: "application/vnd.github+json" };
+          if (json) h["Content-Type"] = "application/json";
+          return h;
+        }
+        function ghAttempt(tok, retried) {
+          return fetch(GH_API + "?ref=main", { headers: hdr(tok), cache: "no-store" }).then(function (r) {
+            if (r.status === 404) return { sha: null, text: "" };
+            return r.json().catch(function () { return {}; }).then(function (d) {
+              if (!r.ok) throw ghFail(r.status, d);
+              if (d.content) return { sha: d.sha, text: unb64(d.content) };
+              if (d.download_url) return fetch(d.download_url, { cache: "no-store" }).then(function (x) { return x.text(); }).then(function (t) { return { sha: d.sha, text: t }; });
+              return { sha: d.sha, text: "" };
+            });
+          }).then(function (rem) {
+            if (rem.text) { try { merge(parseList(rem.text)); persist(); } catch (e) {} }
+            var body = { message: "Motivator: update records", content: b64(toJSON(true)), branch: "main" };
+            if (rem.sha) body.sha = rem.sha;
+            return fetch(GH_API, { method: "PUT", headers: hdr(tok, true), body: JSON.stringify(body) }).then(function (r) {
+              if (r.ok) return;
+              if ((r.status === 409 || r.status === 422) && !retried) return ghAttempt(tok, true);
+              return r.json().catch(function () { return {}; }).then(function (d) { throw ghFail(r.status, d); });
+            });
+          });
+        }
+        var syncing = false, again = false;
+        function ghSync() {
+          if (!store) return;
+          if (syncing) { again = true; return; }
+          var tok = getTok();
+          if (!tok) { ghStatus(false, "请先保存 GitHub Token"); return; }
+          syncing = true;
+          ghStatus(false, "同步中…");
+          ghAttempt(tok, false).then(function () { ghStatus(true, "已同步到 GitHub · " + fullTime(Date.now())); },
+            function (e) { ghStatus(false, e && e.msg ? e.msg : "同步失败：网络错误，请稍后重试"); })
+            .then(function () { syncing = false; if (again) { again = false; ghSync(); } });
+        }
+        var GH_TREE = "https://api.github.com/repos/yanglei-985/yanglei-985.github.io/git/trees/main?recursive=1";
+        function pubRead() {
+          var urls = [];
+          if (/(^|\.)yanglei-985\.github\.io$/i.test(location.hostname)) urls.push("./records.json");
+          fetch(GH_TREE, { headers: { Accept: "application/vnd.github+json" }, cache: "no-store" })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (d) {
+              var has = d && Array.isArray(d.tree) && d.tree.some(function (x) { return x.path === "Motivator/records.json"; });
+              if (has) readFrom([GH_RAW].concat(urls));
+            }, function () { readFrom(urls); });
+        }
+        function readFrom(list) {
+          list.forEach(function (u) {
+            fetch(u + "?t=" + Date.now(), { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error("http"); return r.text(); })
+              .then(function (t) {
+                var res = merge(parseList(t));
+                persist();
+                if (res.added && !syncing) ghStatus(true, "已从 GitHub 读取 " + res.added + " 局记录");
+              }).catch(function () {});
+          });
+        }
+        if (store) {
+          var hasTok = !!getTok(), pref = null;
+          try { pref = localStorage.getItem(AKEY); } catch (e) {}
+          $("gh-auto").checked = pref ? pref === "1" : hasTok;
+          if (hasTok) $("gh-token").placeholder = "已保存（不显示）";
+          ghStatus(hasTok, hasTok ? "Token 已保存" : "未设置 Token");
+        } else {
+          $("gh-write").classList.add("x-hidden");
+          $("gh-off").classList.remove("x-hidden");
+          ghStatus(false, "只读");
+        }
+        $("gh-save").addEventListener("click", function () {
+          var inp = $("gh-token"), v = inp.value.trim();
+          if (!v) { ghStatus(false, "请先粘贴 Token"); return; }
+          try {
+            localStorage.setItem(TKEY, v);
+            if (localStorage.getItem(AKEY) == null) { localStorage.setItem(AKEY, "1"); $("gh-auto").checked = true; }
+          } catch (e) { ghStatus(false, "保存 Token 失败"); return; }
+          inp.value = ""; inp.placeholder = "已保存（不显示）";
+          ghStatus(true, "Token 已保存");
+        });
+        $("gh-clear").addEventListener("click", function () {
+          try { localStorage.removeItem(TKEY); } catch (e) {}
+          $("gh-token").value = ""; $("gh-token").placeholder = "";
+          ghStatus(false, "Token 已清除");
+        });
+        $("gh-sync").addEventListener("click", ghSync);
+        $("gh-auto").addEventListener("change", function () { try { localStorage.setItem(AKEY, this.checked ? "1" : "0"); } catch (e) {} });
+        pubRead();
+
+        /* ---------- 1 s tick ---------- */
+        setInterval(function () {
+          var now = Date.now();
+          if (S.price != null && S.last) {
+            S.hist.push({ x: now, y: S.price });
+            while (S.hist.length && S.hist[0].x < now - WIN - 60000) S.hist.shift();
+          }
+          if (S.pos && now >= S.pos.end && S.price != null) close("time", S.price);
+          if (S.source && S.source !== "轮询" && S.last && now - S.last > 15000) start();
+          renderSrc();
+          render();
+          drawChart();
+        }, 1000);
+
+        lock(!!(S.pos || S.pend));
+        renderPreview();
+        renderStats();
+        render();
+        start();
+      })();
+    </script>
+  </body>
+</html>
