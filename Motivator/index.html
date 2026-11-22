@@ -170,6 +170,7 @@
           <span class="x-live" id="src" data-ok="0">连接中…</span>
           <span class="x-tiny">纯模拟 · 不涉及真钱</span>
         </header>
+        <a href="arena.html" style="display:block;text-align:center;padding:12px;border-radius:12px;background:#1d4ed8;color:#fff;font-weight:700;text-decoration:none;margin:4px 0 8px">🤖 Agent 实盘擂台 →</a>
 
         <section class="x-card" id="sim" aria-label="模拟器">
           <div class="x-row">
@@ -217,6 +218,18 @@
                       <button type="button" data-v="real" aria-pressed="true">真实</button><button type="button" data-v="ideal">理想</button>
                     </div>
                   </div>
+                </div>
+                <div class="x-setrow">
+                  <div class="x-field">
+                    <span class="x-label">费率（OKX 普通用户）</span>
+                    <div class="x-seg" id="feetype" role="group" aria-label="费率">
+                      <button type="button" data-v="taker" aria-pressed="true">Taker 0.05%</button><button type="button" data-v="maker">Maker 0.02%</button>
+                    </div>
+                  </div>
+                  <label class="x-field">
+                    <span class="x-label">出入金成本</span>
+                    <span class="x-input"><input id="xfer" type="number" min="0" step="0.5" value="0.5" inputmode="decimal" /><span>%</span></span>
+                  </label>
                 </div>
                 <p class="x-hint" id="preview-fee">—</p>
               </div>
@@ -419,7 +432,7 @@
         var POLL = "https://data-api.binance.vision/api/v3/ticker/price?symbol=BTCUSDT";
         var KLINES = "https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=15";
         var WIN = 15 * 60 * 1000;
-        var S = { price: null, last: 0, source: "", hist: [], pos: null, log: [], lev: 50, mins: 10, mode: "real", n: 0 };
+        var S = { price: null, last: 0, source: "", hist: [], pos: null, log: [], lev: 50, mins: 10, mode: "real", feeType: "taker", n: 0 };
 
         function fmtP(v) { return v.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }
         function sign(v, d) { d = d == null ? 2 : d; var a = Math.abs(v).toFixed(d); return (Number(a) === 0 ? "" : v > 0 ? "+" : "−") + a; }
@@ -539,13 +552,14 @@
             renderPreview();
           });
         }
-        seg("lev", "lev", true); seg("mins", "mins", true); seg("mode", "mode", false);
+        seg("lev", "lev", true); seg("mins", "mins", true); seg("mode", "mode", false); seg("feetype", "feeType", false);
+        $("xfer").addEventListener("input", renderPreview);
         $("margin").addEventListener("input", renderPreview);
         $("tp").addEventListener("input", renderPreview);
 
         function params() {
           var m = parseFloat($("margin").value), tp = parseFloat($("tp").value), L = S.lev, real = S.mode === "real";
-          var fee = real ? 0.0005 : 0, mmr = real ? 0.004 : 0;
+          var fee = real ? (S.feeType === "maker" ? 0.0002 : 0.0005) : 0, mmr = real ? 0.004 : 0;
           return { m: m, tp: tp, L: L, real: real, fee: fee, mmr: mmr, mins: S.mins, ok: m > 0 && tp > 0 };
         }
         function renderPreview() {
@@ -557,7 +571,8 @@
           $("preview").textContent = "反向 " + liqMove.toFixed(2) + "% 强平 · 正向 " + tpMove.toFixed(2) + "% 止盈";
           $("preview-fee").textContent =
             "名义仓位 " + N.toLocaleString("en-US", { maximumFractionDigits: 2 }) + " USDT · " +
-            (p.real ? "双边手续费约 " + (2 * N * p.fee).toFixed(2) + " USDT（本金的 " + (100 * N * p.fee * 2 / p.m).toFixed(1) + "%）" : "无手续费、无维持保证金");
+            (p.real ? "双边手续费约 " + (2 * N * p.fee).toFixed(2) + " USDT（本金的 " + (100 * N * p.fee * 2 / p.m).toFixed(1) + "%）" : "无手续费、无维持保证金") +
+            (p.real && parseFloat($("xfer").value) > 0 ? " · 本金出入金一次约 " + (p.m * parseFloat($("xfer").value) / 100).toFixed(2) + " USDT（C2C 价差，另 TRC20 提币 2U）" : "");
         }
 
         /* ---------- toasts ---------- */
