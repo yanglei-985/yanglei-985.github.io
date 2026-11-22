@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>🤖 Agent 实盘擂台 · 模拟盘</title>
 <style>
-:root{--bg:#0b0e14;--card:#131824;--line:#232b3b;--tx:#e6e9ef;--mut:#8a93a6;--up:#16c784;--dn:#ea3943;--ac:#f0b90b;--c1:#f0b90b;--c2:#3b82f6;--c3:#e040fb;--c4:#9aa4b8}
+:root{--bg:#0b0e14;--card:#131824;--line:#232b3b;--tx:#e6e9ef;--mut:#8a93a6;--up:#16c784;--dn:#ea3943;--ac:#f0b90b;--c1:#f0b90b;--c2:#3b82f6;--c3:#e040fb;--c4:#9aa4b8;--c5:#22d3ee}
 *{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif}
 .wrap{max-width:480px;margin:0 auto;padding:12px 12px 40px}
 a{color:#7fb0ff}
@@ -42,7 +42,7 @@ svg{display:block;width:100%;height:auto}
 <div class="wrap">
   <div class="top"><a href="index.html">← Motivator</a><span class="sub" id="upd">加载中…</span></div>
   <h1>🤖 Agent 实盘擂台</h1>
-  <div class="sub">4 个交易 Agent 按各自公开说过的规则，用真实行情跑 24 小时纸面交易。每人 10,000 USDT 银行资金起步，出入金、手续费、资金费、滑点、Gas 全部计入。</div>
+  <div class="sub">5 个交易 Agent（4 位按各自公开说过的规则 + 1 个 25x 对称括号单对照），用真实行情跑 24 小时纸面交易。每人 10,000 USDT 银行资金起步，出入金、手续费、资金费、滑点、Gas 全部计入。</div>
   <div class="warn">⚠️ 模拟盘，非投资建议。没有任何真实下单。</div>
 
   <div class="card cd"><div><div class="sub">距 24h 测试结束</div><b id="cd">--:--:--</b></div><div class="sub" id="win" style="text-align:right"></div></div>
@@ -62,9 +62,10 @@ svg{display:block;width:100%;height:auto}
   <div class="foot">数据：OKX 公共行情 / 资金费率、GeckoTerminal 链上分钟 K 线、GoPlus 安全检测。每小时补算一次（逐根 1 分钟 K 线回放，不偷看未来）。页面每 60 秒刷新。<br>模拟盘，非投资建议。</div>
 </div>
 <script>
-var COLORS={laoemo:'var(--c1)',breakoutfart:'var(--c2)',pink:'var(--c3)',gamble:'var(--c4)'};
-var HEX={laoemo:'#f0b90b',breakoutfart:'#3b82f6',pink:'#e040fb',gamble:'#9aa4b8'};
+var COLORS={laoemo:'var(--c1)',breakoutfart:'var(--c2)',pink:'var(--c3)',gamble:'var(--c4)',sym25:'var(--c5)'};
+var HEX={laoemo:'#f0b90b',breakoutfart:'#3b82f6',pink:'#e040fb',gamble:'#9aa4b8',sym25:'#22d3ee'};
 var D=null,SEL=null;
+var PAL=['#ff7a45','#a3e635','#f472b6','#c084fc'];function hx(id){if(!HEX[id]){HEX[id]=PAL[Object.keys(HEX).length%PAL.length]}return HEX[id]}
 function $(id){return document.getElementById(id)}
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function f2(x){return Number(x).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
@@ -78,8 +79,8 @@ function render(){
   $('upd').textContent='数据截至 '+D.data_upto_cst;
   $('win').innerHTML='开始 '+esc(D.start_cst)+'<br>结束 '+esc(D.end_cst)+'<br>(北京时间)';
   var A=D.agents.slice().sort(function(a,b){return b.equity-a.equity});
-  $('lb').innerHTML=A.map(function(a,i){return '<tr><td><span class="rank">'+(i+1)+'</span><span class="dot" style="background:'+HEX[a.id]+'"></span>'+esc(a.name)+'</td><td>'+f2(a.equity)+'</td><td class="'+cl(a.return_pct)+'">'+sg(a.return_pct)+'%</td><td>'+a.trades+'</td><td>'+(a.win_rate==null?'—':a.win_rate+'%')+'</td></tr>'}).join('');
-  $('lb2').innerHTML=A.map(function(a){return '<tr><td><span class="dot" style="background:'+HEX[a.id]+'"></span>'+esc(a.name)+'</td><td>'+f2(a.costs_total)+'</td><td class="dn">-'+a.max_dd_pct.toFixed(2)+'%</td><td>'+a.positions.length+(a.pending&&a.pending.length?' +挂单'+a.pending.length:'')+'</td></tr>'}).join('');
+  $('lb').innerHTML=A.map(function(a,i){return '<tr><td><span class="rank">'+(i+1)+'</span><span class="dot" style="background:'+hx(a.id)+'"></span>'+esc(a.name)+'</td><td>'+f2(a.equity)+'</td><td class="'+cl(a.return_pct)+'">'+sg(a.return_pct)+'%</td><td>'+a.trades+'</td><td>'+(a.win_rate==null?'—':a.win_rate+'%')+'</td></tr>'}).join('');
+  $('lb2').innerHTML=A.map(function(a){return '<tr><td><span class="dot" style="background:'+hx(a.id)+'"></span>'+esc(a.name)+'</td><td>'+f2(a.costs_total)+'</td><td class="dn">-'+a.max_dd_pct.toFixed(2)+'%</td><td>'+a.positions.length+(a.pending&&a.pending.length?' +挂单'+a.pending.length:'')+'</td></tr>'}).join('');
   chart();
   if(!SEL)SEL=D.agents[0].id;
   $('tabs').innerHTML=D.agents.map(function(a){return '<button data-id="'+a.id+'" aria-pressed="'+(a.id===SEL)+'">'+esc(a.name)+'</button>'}).join('');
@@ -99,17 +100,18 @@ function chart(){
   for(var hh=0;hh<=24;hh+=6){var x=X(t0+hh*3600000);g+='<text x="'+x+'" y="'+(H-6)+'" fill="#8a93a6" font-size="10" text-anchor="middle">'+hh+'h</text>'}
   var nx=Math.min(Date.now(),t1);g+='<line x1="'+X(nx)+'" x2="'+X(nx)+'" y1="'+P.t+'" y2="'+(H-P.b)+'" stroke="#f0b90b33"/>';
   D.agents.forEach(function(a){if(!a.curve.length)return;var d=a.curve.map(function(p,i){return (i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1)}).join('');
-    g+='<path d="'+d+'" fill="none" stroke="'+HEX[a.id]+'" stroke-width="'+(a.id===SEL?2.4:1.4)+'" stroke-linejoin="round"/>'});
+    g+='<path d="'+d+'" fill="none" stroke="'+hx(a.id)+'" stroke-width="'+(a.id===SEL?2.4:1.4)+'" stroke-linejoin="round"/>'});
   g+='</svg>';$('chart').innerHTML=g;
-  $('legend').innerHTML=D.agents.map(function(a){return '<span><span class="dot" style="background:'+HEX[a.id]+'"></span>'+esc(a.name)+' '+f2(a.equity)+'</span>'}).join('');
+  $('legend').innerHTML=D.agents.map(function(a){return '<span><span class="dot" style="background:'+hx(a.id)+'"></span>'+esc(a.name)+' '+f2(a.equity)+'</span>'}).join('');
 }
 function detail(){
   var a=D.agents.filter(function(x){return x.id===SEL})[0];if(!a)return;var c=a.costs;
-  var h='<div class="card"><h2><span class="dot" style="background:'+HEX[a.id]+'"></span>'+esc(a.name)+' <span class="sub">'+esc(a.venue)+'</span></h2>';
+  var h='<div class="card"><h2><span class="dot" style="background:'+hx(a.id)+'"></span>'+esc(a.name)+' <span class="sub">'+esc(a.venue)+'</span></h2>';
   h+='<div class="stats"><div class="stat"><span>总资产</span><b>'+f2(a.equity)+'</b></div><div class="stat"><span>收益</span><b class="'+cl(a.return_pct)+'">'+sg(a.return_pct)+'%</b></div><div class="stat"><span>银行余额</span><b>'+f2(a.bank)+'</b></div>'+
      '<div class="stat"><span>场内/链上现金</span><b>'+f2(a.venue_cash)+'</b></div><div class="stat"><span>交易手续费</span><b>'+f2(c.trade_fee)+'</b></div><div class="stat"><span>资金费(净付)</span><b>'+f2(c.funding)+'</b></div>'+
      '<div class="stat"><span>Gas</span><b>'+f2(c.gas)+'</b></div><div class="stat"><span>滑点</span><b>'+f2(c.slippage)+'</b></div><div class="stat"><span>出入金成本</span><b>'+f2(c.transfer)+'</b></div></div>';
   if(a.tranche)h+='<div class="sub">当前使用第 '+a.tranche+' / 5 份资金</div>';
+  if(a.joined_cst&&a.joined_cst!==D.start_cst)h+='<div class="sub">本轮中途加入：'+esc(a.joined_cst)+' 起才开始回放</div>';
   h+='</div><div class="card"><h2>规则卡（来自本人公开说法）</h2><ol class="rules">'+a.rules.map(function(r){return '<li>'+esc(r)+'</li>'}).join('')+'</ol></div>';
   h+='<div class="card"><h2>当前持仓</h2>';
   if(!a.positions.length&&!(a.pending||[]).length)h+='<div class="mut">空仓</div>';
