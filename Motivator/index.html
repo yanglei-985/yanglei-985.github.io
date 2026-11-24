@@ -159,6 +159,11 @@
         .x-setrow--main > .x-field:first-child { order: 2; flex: 1 1 100%; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 10px; }
         .x-setrow--main > .x-field:last-child { order: 1; flex: 1 1 100%; }
       }
+      .x-sym { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+      .x-sym button { border: 1px solid var(--stroke-primary); border-radius: 999px; padding: 4px 10px; background: var(--fill-primary-on); font: inherit; font-size: 13px; cursor: pointer; color: inherit; }
+      .x-sym button[aria-pressed="true"] { background: var(--fill-primary); color: var(--text-primary-on); border-color: transparent; }
+      .x-sym button:disabled { opacity: 0.5; cursor: not-allowed; }
+      .x-sym small { opacity: 0.7; margin-left: 3px; font-size: 11px; }
       @media (max-width: 599px) { .x-card { padding: 14px; } .x-fold > summary { padding-inline: 14px; } .x-fold__body { padding-inline: 14px; } .x-tile b { font-size: 15px; } }
     </style>
   </head>
@@ -173,11 +178,15 @@
         <a href="arena.html" style="display:block;text-align:center;padding:12px;border-radius:12px;background:#1d4ed8;color:#fff;font-weight:700;text-decoration:none;margin:4px 0 8px">🤖 Agent 实盘擂台 →</a>
 
         <section class="x-card" id="sim" aria-label="模拟器">
+          <div class="x-sym" id="sym" role="group" aria-label="合约">
+            <button type="button" data-v="BTCUSDT" aria-pressed="true">BTC</button><button type="button" data-v="ETHUSDT">ETH</button><button type="button" data-v="SOLUSDT">SOL</button><button type="button" data-v="BNBUSDT">BNB</button><button type="button" data-v="XRPUSDT">XRP</button><button type="button" data-v="DOGEUSDT">DOGE</button><button type="button" data-v="NVDAUSDT">英伟达<small>NVDA</small></button><button type="button" data-v="TSLAUSDT">特斯拉<small>TSLA</small></button><button type="button" data-v="QQQUSDT">纳指<small>QQQ</small></button><button type="button" data-v="SPYUSDT">标普<small>SPY</small></button>
+          </div>
           <div class="x-row">
             <div class="x-price" id="price" aria-live="off">—</div>
-            <span class="x-label">BTCUSDT · 15 分钟</span>
+            <span class="x-label" id="sym-label">BTCUSDT · 15 分钟</span>
           </div>
-          <div class="x-mini"><canvas id="px-chart" role="img" aria-label="BTCUSDT 最近 15 分钟价格走势"></canvas></div>
+          <p class="x-hint x-hidden" id="sym-note"></p>
+          <div class="x-mini"><canvas id="px-chart" role="img" aria-label="最近 15 分钟价格走势"></canvas></div>
 
           <div id="controls" class="x-card" style="padding: 0; background: none">
             <div class="x-setrow x-setrow--main">
@@ -188,7 +197,7 @@
               <div class="x-field">
                 <span class="x-label">杠杆</span>
                 <div class="x-seg" id="lev" role="group" aria-label="杠杆">
-                  <button type="button" data-v="10">10×</button><button type="button" data-v="20">20×</button><button type="button" data-v="50" aria-pressed="true">50×</button><button type="button" data-v="75">75×</button><button type="button" data-v="100">100×</button><button type="button" data-v="125">125×</button>
+                  <button type="button" data-v="5">5×</button><button type="button" data-v="10">10×</button><button type="button" data-v="20">20×</button><button type="button" data-v="50" aria-pressed="true">50×</button><button type="button" data-v="75">75×</button><button type="button" data-v="100">100×</button><button type="button" data-v="125">125×</button>
                 </div>
               </div>
             </div>
@@ -427,14 +436,22 @@
     <script>
       (function () {
         var $ = function (id) { return document.getElementById(id); };
-        var FUT = "wss://fstream.binance.com/ws/btcusdt@aggTrade";
-        var SPOT = "wss://data-stream.binance.vision/ws/btcusdt@aggTrade";
-        var POLL = "https://data-api.binance.vision/api/v3/ticker/price?symbol=BTCUSDT";
-        var KLINES = "https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=15";
+        /* 合约表：max = 币安该合约最高杠杆（TradFi 股票合约按上线公告，实际以币安交易规则为准）；d = 价格小数位；tf = 美股类合约（无现货行情） */
+        var SYMS = {
+          BTCUSDT: { max: 125, d: 1 }, ETHUSDT: { max: 100, d: 2 }, SOLUSDT: { max: 100, d: 2 }, BNBUSDT: { max: 75, d: 2 },
+          XRPUSDT: { max: 75, d: 4 }, DOGEUSDT: { max: 75, d: 5 },
+          NVDAUSDT: { max: 10, d: 2, tf: 1 }, TSLAUSDT: { max: 5, d: 2, tf: 1 }, QQQUSDT: { max: 10, d: 2, tf: 1 }, SPYUSDT: { max: 10, d: 2, tf: 1 },
+        };
+        var SYMKEY = "btc-sim-symbol-v1";
+        function cfg(sym) { return SYMS[sym] || SYMS.BTCUSDT; }
+        function FUT() { return "wss://fstream.binance.com/ws/" + S.sym.toLowerCase() + "@aggTrade"; }
+        function SPOT() { return "wss://data-stream.binance.vision/ws/" + S.sym.toLowerCase() + "@aggTrade"; }
+        function POLL() { return cfg(S.sym).tf ? "https://fapi.binance.com/fapi/v1/ticker/price?symbol=" + S.sym : "https://data-api.binance.vision/api/v3/ticker/price?symbol=" + S.sym; }
+        function KLINES() { return (cfg(S.sym).tf ? "https://fapi.binance.com/fapi/v1/klines" : "https://data-api.binance.vision/api/v3/klines") + "?symbol=" + S.sym + "&interval=1m&limit=15"; }
         var WIN = 15 * 60 * 1000;
-        var S = { price: null, last: 0, source: "", hist: [], pos: null, log: [], lev: 50, mins: 10, mode: "real", feeType: "taker", n: 0 };
+        var S = { sym: "BTCUSDT", price: null, last: 0, source: "", hist: [], pos: null, log: [], lev: 50, mins: 10, mode: "real", feeType: "taker", n: 0 };
 
-        function fmtP(v) { return v.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }
+        function fmtP(v, sym) { var d = cfg(sym || S.sym).d; return v.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d }); }
         function sign(v, d) { d = d == null ? 2 : d; var a = Math.abs(v).toFixed(d); return (Number(a) === 0 ? "" : v > 0 ? "+" : "−") + a; }
         function cls(v) { return v > 0.0049 ? "x-up" : v < -0.0049 ? "x-down" : ""; }
         function pad(n) { return (n < 10 ? "0" : "") + n; }
@@ -456,7 +473,7 @@
           schedule();
         }
         function tryWs(url, src, next) {
-          var my = ++gen, got = false, done = false, sock, t;
+          var my = ++gen, got = false, done = false, sock, t, want = S.sym;
           function fail() {
             if (done || my !== gen) return;
             done = true; clearTimeout(t);
@@ -469,13 +486,15 @@
           sock.onmessage = function (e) {
             if (my !== gen) return;
             got = true; clearTimeout(t);
+            if (want !== S.sym) return;
             try { onPrice(parseFloat(JSON.parse(e.data).p), src); } catch (_) {}
           };
           sock.onerror = fail;
           sock.onclose = fail;
         }
         function pollOnce() {
-          fetch(POLL).then(function (r) { return r.json(); }).then(function (d) { onPrice(parseFloat(d.price), "轮询"); }).catch(function () {});
+          var want = S.sym;
+          fetch(POLL()).then(function (r) { return r.json(); }).then(function (d) { if (want === S.sym) onPrice(parseFloat(d.price), "轮询"); }).catch(function () {});
         }
         function poll() {
           gen++;
@@ -485,7 +504,7 @@
         function start() {
           stopAll();
           S.source = ""; renderSrc();
-          tryWs(FUT, "合约实时", function () { tryWs(SPOT, "现货实时", poll); });
+          tryWs(FUT(), "合约实时", function () { if (cfg(S.sym).tf) poll(); else tryWs(SPOT(), "现货实时", poll); });
         }
         function renderSrc() {
           var el = $("src");
@@ -498,7 +517,7 @@
           type: "line",
           data: {
             datasets: [
-              { label: "BTCUSDT", data: S.hist },
+              { label: "价格", data: S.hist },
               { label: "", data: [], borderColor: "var(--chart-reference)", borderDash: [3, 4], borderWidth: 1, pointRadius: 0 },
             ],
           },
@@ -529,8 +548,10 @@
           else { ref.label = ""; ref.data = []; }
           chart.update("none");
         }
-        fetch(KLINES).then(function (r) { return r.json(); }).then(function (rows) {
-          if (!Array.isArray(rows)) return;
+        function loadKlines() {
+        var want = S.sym;
+        fetch(KLINES()).then(function (r) { return r.json(); }).then(function (rows) {
+          if (!Array.isArray(rows) || want !== S.sym) return;
           var pts = rows.map(function (k) { return { x: k[0] + 60000, y: parseFloat(k[4]) }; }).filter(function (p) { return isFinite(p.y); });
           if (!pts.length) return;
           var lastX = pts[pts.length - 1].x;
@@ -540,6 +561,7 @@
           if (S.price == null) { S.price = pts[pts.length - 1].y; schedule(); }
           drawChart();
         }).catch(function () {});
+        }
 
         /* ---------- controls ---------- */
         function seg(id, key, num) {
@@ -553,6 +575,39 @@
           });
         }
         seg("lev", "lev", true); seg("mins", "mins", true); seg("mode", "mode", false); seg("feetype", "feeType", false);
+        function applyCaps() {
+          var max = cfg(S.sym).max, best = null;
+          $("lev").querySelectorAll("button").forEach(function (b) {
+            var v = Number(b.dataset.v), ok = v <= max;
+            b.disabled = !ok || !!(S.pos || S.pend);
+            b.title = ok ? "" : "币安该合约最高 " + max + "×";
+            if (ok) best = v;
+          });
+          if (S.lev > max) {
+            S.lev = best;
+            $("lev").querySelectorAll("button").forEach(function (b) { b.setAttribute("aria-pressed", Number(b.dataset.v) === best ? "true" : "false"); });
+          }
+        }
+        function setSym(sym, quiet) {
+          if (!SYMS[sym] || ((S.pos || S.pend) && !quiet)) return;
+          S.sym = sym;
+          $("sym").querySelectorAll("button").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.v === sym ? "true" : "false"); });
+          $("sym-label").textContent = sym + " · 15 分钟";
+          var tf = cfg(sym).tf;
+          $("sym-note").classList.toggle("x-hidden", !tf);
+          $("sym-note").textContent = tf ? "美股类合约：币安最高 " + cfg(sym).max + "×；美股休市时价格由币安按自家盘口估算，波动小但开盘可能跳空。" : "";
+          if (store) { try { localStorage.setItem(SYMKEY, sym); } catch (e) {} }
+          S.price = null; S.last = 0; S.hist.length = 0;
+          $("price").textContent = "—";
+          if (!(S.pos || S.pend)) applyCaps();
+          renderPreview(); drawChart();
+          loadKlines(); start();
+        }
+        $("sym").addEventListener("click", function (e) {
+          var b = e.target.closest("button");
+          if (!b || b.disabled) return;
+          setSym(b.dataset.v);
+        });
         $("xfer").addEventListener("input", renderPreview);
         $("margin").addEventListener("input", renderPreview);
         $("tp").addEventListener("input", renderPreview);
@@ -595,8 +650,9 @@
         function untoast(key) { var el = $("toasts").querySelector('[data-key="' + key + '"]'); if (el) el.remove(); }
 
         function lock(on) {
-          document.querySelectorAll("#controls button, #controls input").forEach(function (el) { el.disabled = on; });
+          document.querySelectorAll("#controls button, #controls input, #sym button").forEach(function (el) { el.disabled = on; });
           $("close").disabled = !on;
+          if (!on) applyCaps();
         }
 
         /* ---------- positions ---------- */
@@ -611,7 +667,7 @@
           var e = S.price, N = p.m * p.L, qty = N / e, openFee = N * p.fee, buf = p.m - openFee - N * p.mmr;
           var now = Date.now();
           S.pos = {
-            dir: dir, coin: !!coin, m: p.m, L: p.L, real: p.real, fee: p.fee, e: e, N: N, qty: qty, openFee: openFee,
+            s: S.sym, dir: dir, coin: !!coin, m: p.m, L: p.L, real: p.real, fee: p.fee, e: e, N: N, qty: qty, openFee: openFee,
             liq: e - (dir * Math.max(buf, 0)) / qty, tpP: e * (1 + (dir * p.tp) / 100 / p.L), tp: p.tp,
             start: now, end: now + p.mins * 60000, mins: p.mins,
           };
@@ -642,7 +698,7 @@
           }
           var label = (kind === "tp" ? (P.tp === 100 ? "止盈翻倍" : "止盈 +" + P.tp + "%") : KIND[kind]) + (off ? "（离线补算）" : "");
           S.n++;
-          var r = { i: S.n, t: at || Date.now(), dir: P.dir, coin: P.coin, L: P.L, real: P.real, e: P.e, x: px, kind: kind, label: label, pnl: pnl, fees: fees, m: P.m };
+          var r = { i: S.n, t: at || Date.now(), s: P.s || "BTCUSDT", dir: P.dir, coin: P.coin, L: P.L, real: P.real, e: P.e, x: px, kind: kind, label: label, pnl: pnl, fees: fees, m: P.m };
           S.log.push(r);
           if (off) rebuild(); else { addRow(r); renderStats(); }
           persist();
@@ -661,10 +717,10 @@
           tr.innerHTML =
             '<th scope="row">' + r.i + "</th>" +
             td("时间", hhmmss(r.t)) +
-            td("方向", (r.dir > 0 ? "做多" : "做空") + (r.coin ? "<small>抛硬币</small>" : "")) +
+            td("方向", (r.dir > 0 ? "做多" : "做空") + "<small>" + esc((r.s || "BTCUSDT").replace("USDT", "")) + (r.coin ? " · 抛硬币" : "") + "</small>") +
             td("杠杆", r.L + "×<small>" + (r.real ? "真实" : "理想") + "</small>") +
-            td("入场", fmtP(r.e)) +
-            td("出场", fmtP(r.x)) +
+            td("入场", fmtP(r.e, r.s)) +
+            td("出场", fmtP(r.x, r.s)) +
             td("结果", esc(r.label)) +
             td("盈亏 USDT", '<span class="' + cls(r.pnl) + '">' + sign(r.pnl) + "</span>", "num");
           $("rows").prepend(tr);
@@ -683,7 +739,7 @@
           $("s-fee").textContent = fees.toFixed(2);
           var recent = L.slice(-5).reverse();
           $("recent").innerHTML = recent.length ? recent.map(function (r) {
-            return "<li><span>#" + r.i + " " + (r.dir > 0 ? "做多" : "做空") + " " + r.L + "×<small>" + (r.real ? "真实" : "理想") + (r.coin ? " · 抛硬币" : "") + "</small></span>" +
+            return "<li><span>#" + r.i + " " + esc((r.s || "BTCUSDT").replace("USDT", "")) + " " + (r.dir > 0 ? "做多" : "做空") + " " + r.L + "×<small>" + (r.real ? "真实" : "理想") + (r.coin ? " · 抛硬币" : "") + "</small></span>" +
               '<span class="x-tag" data-k="' + r.kind + '">' + esc(r.label) + "</span>" +
               '<span class="x-num ' + cls(r.pnl) + '">' + sign(r.pnl) + "</span></li>";
           }).join("") : '<li><span class="x-empty">还没有对局</span></li>';
@@ -765,7 +821,7 @@
           if (!isFinite(t) || !isFinite(e) || !isFinite(x) || !isFinite(pnl)) return null;
           var kind = r.kind === "tp" || KIND[r.kind] ? r.kind : "manual";
           return {
-            i: 0, t: t, dir: Number(r.dir) < 0 ? -1 : 1, coin: !!r.coin, L: Number(r.L) || 0, real: r.real !== false,
+            i: 0, t: t, s: SYMS[r.s] ? r.s : "BTCUSDT", dir: Number(r.dir) < 0 ? -1 : 1, coin: !!r.coin, L: Number(r.L) || 0, real: r.real !== false,
             e: e, x: x, kind: kind, label: String(r.label || KIND[kind] || "止盈").slice(0, 40),
             pnl: pnl, fees: Number(r.fees) || 0, m: Number(r.m) || 0,
           };
@@ -818,11 +874,11 @@
         }
         function csvCell(v) { v = String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
         function toCSV() {
-          var head = ["序号", "时间", "方向", "抛硬币", "杠杆", "模式", "本金 USDT", "入场", "出场", "结果", "盈亏 USDT", "手续费 USDT"];
+          var head = ["序号", "时间", "合约", "方向", "抛硬币", "杠杆", "模式", "本金 USDT", "入场", "出场", "结果", "盈亏 USDT", "手续费 USDT"];
           var lines = [head.join(",")];
           S.log.forEach(function (r) {
-            lines.push([r.i, fullTime(r.t), r.dir > 0 ? "做多" : "做空", r.coin ? "是" : "否", r.L + "×", r.real ? "真实" : "理想", r.m,
-              r.e.toFixed(1), r.x.toFixed(1), r.label, r.pnl.toFixed(4), r.fees.toFixed(4)].map(csvCell).join(","));
+            lines.push([r.i, fullTime(r.t), r.s || "BTCUSDT", r.dir > 0 ? "做多" : "做空", r.coin ? "是" : "否", r.L + "×", r.real ? "真实" : "理想", r.m,
+              r.e.toFixed(cfg(r.s).d), r.x.toFixed(cfg(r.s).d), r.label, r.pnl.toFixed(4), r.fees.toFixed(4)].map(csvCell).join(","));
           });
           return lines.join("\n");
         }
@@ -911,12 +967,13 @@
         }
         function notice(text, kind) { toast(text, kind || "", "catch", true); }
         function fetchKl(P, to) {
-          var qs = "?symbol=BTCUSDT&interval=1m&startTime=" + Math.floor(P.start / 60000) * 60000 + "&endTime=" + to + "&limit=1000";
+          var sym = P.s || "BTCUSDT";
+          var qs = "?symbol=" + sym + "&interval=1m&startTime=" + Math.floor(P.start / 60000) * 60000 + "&endTime=" + to + "&limit=1000";
           function get(base) {
             return fetch(base + qs, { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error("http"); return r.json(); })
               .then(function (d) { if (!Array.isArray(d)) throw new Error("bad"); return d; });
           }
-          return get(KL_A).catch(function () { return get(KL_B); });
+          return cfg(sym).tf ? get(KL_B) : get(KL_A).catch(function () { return get(KL_B); });
         }
         function scan(P, rows) {
           for (var i = 0; i < rows.length; i++) {
@@ -1090,11 +1147,16 @@
           drawChart();
         }, 1000);
 
+        (function () {
+          var open = S.pos || S.pend, saved = null;
+          if (store) { try { saved = localStorage.getItem(SYMKEY); } catch (e) {} }
+          var sym = open && SYMS[open.s] ? open.s : open ? "BTCUSDT" : SYMS[saved] ? saved : "BTCUSDT";
+          setSym(sym, true);
+        })();
         lock(!!(S.pos || S.pend));
         renderPreview();
         renderStats();
         render();
-        start();
       })();
     </script>
   </body>
